@@ -120,3 +120,26 @@
     print(doc.pingdb)
     ```
 
+17. Make MongoDB available externally /etc/mongod.conf
+
+    ```yaml
+    net:
+      port: 27017
+      bindIp: 0.0.0.0
+    ```
+
+  - Download MongoDB Shell from https://www.mongodb.com/try/download/shell
+  - Access from PowerShell
+
+    ```powershell
+    .\mongosh "mongodb://barry75@barryonweb.com:27017/chatappdb"
+    ``` 
+
+18. Connect Backend to MongoDB
+
+ - Update application.yaml
+ - Add MongoDB dependency to pom.xml
+ - Add Model
+ - Add Repository - subclass of MongoRepository
+ - Add Controller
+

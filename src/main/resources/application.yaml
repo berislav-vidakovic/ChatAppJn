@@ -1,5 +1,9 @@
 spring:
   application:
     name: chatappjn
+  data:
+    mongodb:
+      uri: mongodb://barry75:abc123@barryonweb.com:27017/chatappdb
+      database: chatappdb
 server:
   port: 8081
