@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: chatappjn
+server:
+  port: 8081
