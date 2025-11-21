@@ -80,9 +80,7 @@ create remote repo, init, commit and  push
 
 ## 4. Register backend as service
 
-- Create 
-<a href = "Service.md">
-chatappjn.service file
+- Create <a href = "Service.md"> chatappjn.service file
 </a>
 
 - Reload systemd to register the service
