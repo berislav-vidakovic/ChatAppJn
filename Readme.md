@@ -1,145 +1,111 @@
-# MongoDB
-
-## Install MongoDB
-
-1. Import MongoDB public GPG key
-
-    ```bash
-    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
-    ```
-
-2. Add MongoDB repository
-
-    ```bash
-    echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
-    https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | \
-    sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-    ```
-
-3. Install MongoDB
-
-    ```bash
-    sudo apt update
-    sudo apt install -y mongodb-org
-    ```
-
-## Create users
-
-4. Add security block to /etc/mongod.conf
-
-    ```yaml
-    security:
-      authorization: enabled
-    ```
-
-5. Set permissions recursively
-
-    ```bash
-    sudo chown -R mongodb:mongodb /var/lib/mongodb
-    sudo chown -R mongodb:mongodb /var/log/mongodb
-    ```
-
-6. Start with no access control 
-
-    ```bash
-    sudo mongod --dbpath /var/lib/mongodb --noauth --logpath /var/log/mongodb/noauth.log
-    ```
-
-7. Create user dbadmin in DB admin and verify
-
-    ```bash
-    mongosh
-    use admin
-    db.createUser({ user: "dbadmin", pwd: "abc123", roles: [ { role: "root", db: "admin" } ] })
-    db.getUsers()
-    exit
-    ```
-
-8. Stop no-auth mode, restart normally, login to DB admin with user dbadmin
-
-    ```bash
-    sudo pkill mongod
-    sudo systemctl start mongod
-    mongosh -u dbadmin -p --authenticationDatabase admin
-    ```
-
-9. Change password
-
-    ```bash
-    db.updateUser( "dbadmin", { pwd: "abc123" } )
-    ```
+# Java backend with MongoDb, CI/CD yaml and Nging deployment
 
 
-10. Create DB,  create user within, Show DBs
 
-    ```bash
-    use chatappdb
-    db.createUser({ user: "barry75", pwd: "abc123", roles: [ { role: "readWrite", db: "chatappdb" } ] })
-    db.updateUser( "barry75", { roles: [ { role: "dbOwner", db: "chatappdb" } ] }  )
-    show dbs
-    ```
-
-11. Login to DB with user defined within
-
-    ```bash
-    mongosh -u barry75 -p --authenticationDatabase chatappdb
-    ```
-
-12. Insert document into test collection
-
-    ```bash
-    db.test.insertOne({ pingdb: 'Hello world from MongoDB' })
-    ```
+<div style="margin-bottom: 12px;">
+<img src = "src/main/resources/static/images/java.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/spring.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/mongodb.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/cicd.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/yaml.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/nginx.jpg" style="height:25px; margin-right: 15px;" /> 
+</div>
 
 
-13. Show all collections 
+## Table of Contents
 
-    ```bash
-    show collections
-    db.getCollectionNames()
-    ```
+0. [Prerequisites](#0-prerequisites)
+1. [Java Spring backend](#1-java-spring-backend)
+2. [MongoDB](#2-mongodb)
+3. [Nginx configuration](#3-nginx-configuration)
+4. [Register backend as service](#4-register-backend-as-service)
+5. [CI/CD pipeline](#5-cicd-pipeline)
+
+## 0. Prerequisites 
+
+1. Created subdomain on VPS (production server)
+2. Installed Nginx
+3. Installed Java runtime
+4. Installed MongoDB
+5. Established SSH connections Dev-Github-Prod
+6. Installed certbot for issuing SSL certificate
+
+<a href="Prerequisites.md">
+View Details of prerequisite steps
+</a>
 
 
-14. Fetch content of Collection
+## 1. Java Spring backend
 
-    ```bash
-    db.test.find()
-    ```
+- Generate Spring Boot Project on  https://start.spring.io
 
-15. Fetch document with particular field
+    - Select latest stable Spring Boot (no RC2, SNAPSHOT), Java 21
+    - Add Dependencies:
 
-    ```bash
-    db.test.find({ pingdb: { $exists: true } })
-    ```
+      - Spring Web (for REST API)
+      - WebSocket (for WebSocket support)
+      - Spring Boot DevTools
+    
+    - Download and Extract
 
-16. Fetch only particular document, no id and print value
-
-    ```bash
-    db.test.find({ pingdb: { $exists: true } }, { pingdb: 1, _id: 0 } )
-    let doc =db.test.findOne( { pingdb: { $exists: true } }, { pingdb: 1, _id: 0 } ); 
-    print(doc.pingdb)
-    ```
-
-17. Make MongoDB available externally /etc/mongod.conf
+- Define Port (default is 8080) in application.yaml
 
     ```yaml
-    net:
-      port: 27017
-      bindIp: 0.0.0.0
+    server:
+      port: 8081
     ```
 
-  - Download MongoDB Shell from https://www.mongodb.com/try/download/shell
-  - Access from PowerShell
+- Build, Run
 
-    ```powershell
-    .\mongosh "mongodb://barry75@barryonweb.com:27017/chatappdb"
-    ``` 
+    ```bash
+    mvn clean package -DskipTests
+    mvn spring-boot:run
+    ```
 
-18. Connect Backend to MongoDB
+- Git init, commit, push
 
- - Update application.yaml
- - Add MongoDB dependency to pom.xml
- - Add Model
- - Add Repository - subclass of MongoRepository
- - Add Controller
+  - Create Repo on GitHub
+  - Run
+      ```bash
+      git init
+      git add .
+      git commit -m "Initial commit"
+      ```
+  - Get Remote Repo SSH link and run
+      ```bash
+      git remote add origin git@github.com:berislav-vidakovic/ChatAppJn.git
+      ```
+
+- Add ping endpoint
+
+  - Create Controllers/PingController.java
+
+
+## 2. MongoDB
+
+<a href="MongoDb.md">
+
+- Create user, database, collection and document
+</a>
+
+- Connect backend to DB
+  - Update application.yaml
+  - Add MongoDB dependency to pom.xml
+  - Add Model
+  - Add Repository - subclass of MongoRepository
+  - Add Controller Controllers/PingDbController.java
+
+## 3. Nginx configuration
+
+  - Create basic Nginx config file
+  - Enable nginx on startup
+  - Issue SSL certificate for the subdomain
+
+
+## 4. Register backend as service
+
+
+## 5. CI/CD pipeline
+
+  - Create yaml file for deployment, reload Nginx and restart backend service
 
