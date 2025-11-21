@@ -61,8 +61,7 @@ create remote repo, init, commit and  push
 
 ## 2. MongoDB
 
-- Create <a href="MongoDb.md">
-user, database, collection and document
+- Create <a href="MongoDb.md"> user, database, collection and document
 </a>
 
 - Connect backend to DB
