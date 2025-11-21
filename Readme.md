@@ -22,7 +22,11 @@
 5. [CI/CD pipeline](#5-cicd-pipeline)
 
 
-## 1. Java Spring backend
+   
+
+## 1. Java Spring backend 
+<img src = "src/main/resources/static/images/java.png" style="height:25px; margin-right: 15px;" /> <img src = "src/main/resources/static/images/spring.png" style="height:25px; margin-right: 15px;" /> 
+
 
 - Generate Spring Boot Project on  https://start.spring.io
 
