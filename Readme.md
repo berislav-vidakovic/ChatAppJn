@@ -64,6 +64,8 @@ create remote repo, init, commit and  push
 
 
 ## 2. MongoDB
+<img src = "src/main/resources/static/images/mongodb.png" style="height:25px; margin-right: 15px;" /> 
+
 
 - Create <a href="MongoDb.md"> user, database, collection and document
 </a>
@@ -76,6 +78,8 @@ create remote repo, init, commit and  push
   - Add Controller Controllers/PingDbController.java
 
 ## 3. Nginx configuration
+<img src = "src/main/resources/static/images/nginx.jpg" style="height:25px; margin-right: 15px;" /> 
+
 
   - Create basic Nginx config file
   - Enable nginx on startup
@@ -117,6 +121,9 @@ create remote repo, init, commit and  push
 
 
 ## 5. CI/CD pipeline
+<img src = "src/main/resources/static/images/yaml.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/cicd.png" style="height:25px; margin-right: 15px;" /> 
+
 
   - Create yaml file for deployment, reload Nginx and restart backend service
 
