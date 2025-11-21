@@ -14,25 +14,12 @@
 
 ## Table of Contents
 
-0. [Prerequisites](#0-prerequisites)
+0. [Prerequisites](Prerequisites.md)
 1. [Java Spring backend](#1-java-spring-backend)
 2. [MongoDB](#2-mongodb)
 3. [Nginx configuration](#3-nginx-configuration)
 4. [Register backend as service](#4-register-backend-as-service)
 5. [CI/CD pipeline](#5-cicd-pipeline)
-
-## 0. Prerequisites 
-
-1. Created subdomain on VPS (production server)
-2. Installed Nginx
-3. Installed Java runtime
-4. Installed MongoDB
-5. Established SSH connections Dev-Github-Prod
-6. Installed certbot for issuing SSL certificate
-
-<a href="Prerequisites.md">
-View Details of prerequisite steps
-</a>
 
 
 ## 1. Java Spring backend
@@ -61,20 +48,11 @@ View Details of prerequisite steps
     mvn clean package -DskipTests
     mvn spring-boot:run
     ```
+  **- Built jar file** target\chatappjn-0.0.1-SNAPSHOT.jar
 
-- Git init, commit, push
-
-  - Create Repo on GitHub
-  - Run
-      ```bash
-      git init
-      git add .
-      git commit -m "Initial commit"
-      ```
-  - Get Remote Repo SSH link and run
-      ```bash
-      git remote add origin git@github.com:berislav-vidakovic/ChatAppJn.git
-      ```
+- Git  <a href="Git.md">
+create remote repo, init, commit and  push
+</a>
 
 - Add ping endpoint
 
@@ -83,9 +61,8 @@ View Details of prerequisite steps
 
 ## 2. MongoDB
 
-<a href="MongoDb.md">
-
-- Create user, database, collection and document
+- Create <a href="MongoDb.md">
+user, database, collection and document
 </a>
 
 - Connect backend to DB
@@ -103,6 +80,39 @@ View Details of prerequisite steps
 
 
 ## 4. Register backend as service
+
+- Create 
+<a href = "Service.md">
+chatappjn.service file
+</a>
+
+- Reload systemd to register the service
+
+      sudo systemctl daemon-reload
+
+- Start/stop the service, check status, enable auto start on boot 
+
+      sudo systemctl start chatappjn
+      sudo systemctl stop chatappjn
+      sudo systemctl status chatappjn
+      sudo systemctl enable chatappjn
+
+- Enable no password to restart service
+
+      sudo visudo 
+      barry75 ALL=(ALL) NOPASSWD: /bin/systemctl restart chatappjn
+      barry75 ALL=(ALL) NOPASSWD: /bin/systemctl reload nginx
+      barry75 ALL=(ALL) NOPASSWD: /bin/cp, /bin/ln, /usr/sbin/nginx
+
+- Check no password commands for the user
+
+      sudo -l -U barry75
+
+
+- Follow logs in realtime
+
+      sudo journalctl -u chatappjn -f
+
 
 
 ## 5. CI/CD pipeline

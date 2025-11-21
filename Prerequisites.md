@@ -7,6 +7,8 @@
 3. [Install Java runtime](#3-install-java-runtime)
 4. [Install MongoDB](#4-install-mongodb)
 5. [Establish SSH connections Dev-Github-Prod](#5-establish-ssh-connections-dev-github-prod)
+   - [5.1 SSH connection Dev-Github](#51-ssh-connection-dev-github)
+   - [5.2 SSH connection Github-Prod](#52-ssh-connection-github-prod)
 6. [Install certbot for issuing SSL certificate](#6-install-certbot-for-issuing-ssl-certificate)
 
 ### 1. Create subdomain on VPS (production server)
