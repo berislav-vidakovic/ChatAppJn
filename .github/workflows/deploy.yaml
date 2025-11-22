@@ -33,6 +33,12 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      # Retrieves the fingerprint and store it in the GitHub Actions VM's known_hosts file.
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan barryonweb.com >> ~/.ssh/known_hosts
 
       # Copy published files to server
       - name: Deploy backend files 
