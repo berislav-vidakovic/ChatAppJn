@@ -167,7 +167,12 @@ update Nginx config file </a>
 
 
   - Create folder .github\workflows 
-  - Add yaml file for deployment, reload Nginx and restart backend service
+  - Add <a href="initial-yaml.md">yaml file</a> for deployment, reload Nginx and restart backend service
+  - Github
+    - Repo → Settings → Secrets and variables → Actions
+      - Create SSH_PRIVATE_KEY in Repository Secrets
+      - Copy content of ~\\.ssh\github_ci private key
+
 
 
 
