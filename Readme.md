@@ -1,14 +1,14 @@
-# Java backend with MongoDb, CI/CD yaml and Nging deployment
+# Java backend with MongoDb, CI/CD and Nginx 
 
 
 
 <div style="margin-bottom: 12px;">
-<img src = "src/main/resources/static/images/java.png" style="height:25px; margin-right: 15px;" /> 
-<img src = "src/main/resources/static/images/spring.png" style="height:25px; margin-right: 15px;" /> 
-<img src = "src/main/resources/static/images/mongodb.png" style="height:25px; margin-right: 15px;" /> 
-<img src = "src/main/resources/static/images/cicd.png" style="height:25px; margin-right: 15px;" /> 
-<img src = "src/main/resources/static/images/yaml.png" style="height:25px; margin-right: 15px;" /> 
-<img src = "src/main/resources/static/images/nginx.jpg" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/java.png" style="height:35px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/spring.png" style="height:35px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/mongodb.png" style="height:35px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/cicd.png" style="height:35px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/yaml.png" style="height:35px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/nginx.jpg" style="height:35px; margin-right: 15px;" /> 
 </div>
 
 
@@ -25,7 +25,7 @@
    
 
 ## 1. Java Spring backend 
-<img src = "src/main/resources/static/images/java.png" style="height:25px; margin-right: 15px;" /> <img src = "src/main/resources/static/images/spring.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/java.png" style="height:35px; margin-right: 15px;" /> <img src = "src/main/resources/static/images/spring.png" style="height:35px; margin-right: 15px;" /> 
 
 
 - Generate Spring Boot Project on  https://start.spring.io
@@ -64,7 +64,7 @@ create remote repo, init, commit and  push
 
 
 ## 2. MongoDB
-<img src = "src/main/resources/static/images/mongodb.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/mongodb.png" style="height:35px; margin-right: 15px;" /> 
 
 
 - Create <a href="MongoDb.md"> user, database, collection and document
@@ -80,7 +80,7 @@ create remote repo, init, commit and  push
   - Add Controller Controllers/PingDbController.java
 
 ## 3. Nginx configuration
-<img src = "src/main/resources/static/images/nginx.jpg" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/nginx.jpg" style="height:35px; margin-right: 15px;" /> 
 
 
 - Create <a href="basic-nginx-cfg.md">
@@ -169,7 +169,7 @@ update Nginx config file </a>
 
 
 ## 5. CI/CD pipeline
-<img src = "src/main/resources/static/images/yaml.png" style="height:25px; margin-right: 15px;" /> <img src = "src/main/resources/static/images/cicd.png" style="height:25px; margin-right: 15px;" /> 
+<img src = "src/main/resources/static/images/yaml.png" style="height:35px; margin-right: 15px;" /> <img src = "src/main/resources/static/images/cicd.png" style="height:35px; margin-right: 15px;" /> 
 
 
   - Create folder .github\workflows 
