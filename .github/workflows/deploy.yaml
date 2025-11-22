@@ -34,7 +34,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
-      # Retrieves the fingerprint and store it in the GitHub Actions VM's known_hosts file.
+      # Retrieve the fingerprint and store it in the GitHub Actions VM's known_hosts file.
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh

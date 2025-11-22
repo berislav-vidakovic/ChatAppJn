@@ -160,6 +160,12 @@ update Nginx config file </a>
 
       sudo journalctl -u chatappjn -f
 
+- Enable no password to restart service in /etc/sudoers and verify
+
+      sudo visudo 
+      barry75 ALL=(ALL) NOPASSWD: /bin/systemctl restart chatappjn.service
+      sudo -l -U barry75
+
 
 
 ## 5. CI/CD pipeline
