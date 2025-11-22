@@ -70,6 +70,8 @@ create remote repo, init, commit and  push
 - Create <a href="MongoDb.md"> user, database, collection and document
 </a>
 
+
+
 - Connect backend to DB
   - Update application.yaml
   - Add MongoDB dependency to pom.xml
@@ -81,15 +83,67 @@ create remote repo, init, commit and  push
 <img src = "src/main/resources/static/images/nginx.jpg" style="height:25px; margin-right: 15px;" /> 
 
 
-  - Create basic Nginx config file
-  - Enable nginx on startup
-  - Issue SSL certificate for the subdomain
+- Create <a href="basic-nginx-cfg.md">
+basic Nginx config file chatjn.barryonweb.com
+</a>
+ 
+- Copy, Enable Nginx site and check sites enabled
+
+    ```bash
+    scp chatjn.barryonweb.com barry75@barryonweb.com:/var/www/chatapp/nginx/
+    sudo cp /var/www/chatapp/nginx/chatjn.barryonweb.com /etc/nginx/sites-available/
+    sudo ln -s /etc/nginx/sites-available/chatjn.barryonweb.com /etc/nginx/sites-enabled/
+    ls -l /etc/nginx/sites-enabled/
+    ```
+
+- Issue SSL certificate for the subdomain
+
+  ```bash
+  sudo certbot --nginx -d chatjn.barryonweb.com
+  ```
+
+  - SSL manager will <a href="ssl-nginx-cfg.md">
+update Nginx config file </a>
+
+- Check Nginx syntax and reload
+
+  ```bash
+  sudo nginx -t
+  sudo systemctl reload nginx
+  ```
+
+
+- Build backend, copy and run manually 
+
+  ```bash
+  mvn clean package
+  scp target/chatappjn-0.0.1-SNAPSHOT.jar barry75@barryonweb.com:/var/www/chatapp/backend/chatjn/
+  java -jar chatappjn-0.0.1-SNAPSHOT.jar
+  ```
+
+- Test 
+
+  - Test locally
+    ```bash
+    curl http://localhost:8081/api/ping
+    curl http://localhost:8081/api/pingdb
+    ```
+
+  - Test via Nginx + SSL
+    ```bash
+    curl -k https://chatjn.barryonweb.com/api/ping
+    curl -k https://chatjn.barryonweb.com/api/pingdb
+    ```
 
 
 ## 4. Register backend as service
 
 - Create <a href = "Service.md"> chatappjn.service file
-</a>
+</a> and copy to /etc/systemd/system
+
+  ```bash
+  scp chatappjn.service barry75@barryonweb.com:/etc/systemd/system/ 
+  ```
 
 - Reload systemd to register the service
 
@@ -102,18 +156,6 @@ create remote repo, init, commit and  push
       sudo systemctl status chatappjn
       sudo systemctl enable chatappjn
 
-- Enable no password to restart service
-
-      sudo visudo 
-      barry75 ALL=(ALL) NOPASSWD: /bin/systemctl restart chatappjn
-      barry75 ALL=(ALL) NOPASSWD: /bin/systemctl reload nginx
-      barry75 ALL=(ALL) NOPASSWD: /bin/cp, /bin/ln, /usr/sbin/nginx
-
-- Check no password commands for the user
-
-      sudo -l -U barry75
-
-
 - Follow logs in realtime
 
       sudo journalctl -u chatappjn -f
@@ -124,5 +166,8 @@ create remote repo, init, commit and  push
 <img src = "src/main/resources/static/images/yaml.png" style="height:25px; margin-right: 15px;" /> <img src = "src/main/resources/static/images/cicd.png" style="height:25px; margin-right: 15px;" /> 
 
 
-  - Create yaml file for deployment, reload Nginx and restart backend service
+  - Create folder .github\workflows 
+  - Add yaml file for deployment, reload Nginx and restart backend service
+
+
 

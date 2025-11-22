@@ -3,9 +3,9 @@
 ### Table of Content 
 
 1. [Create subdomain on VPS (production server)](#1-create-subdomain-on-vps-production-server)
-2. [Install Nginx](#2-install-nginx)
+2. [Install Nginx and enable on boot](#2-install-nginx-and-enable-on-boot)
 3. [Install Java runtime](#3-install-java-runtime)
-4. [Install MongoDB](#4-install-mongodb)
+4. [Install MongoDB and enable on boot](#4-install-mongodb-and-enable-on-boot)
 5. [Establish SSH connections Dev-Github-Prod](#5-establish-ssh-connections-dev-github-prod)
    - [5.1 SSH connection Dev-Github](#51-ssh-connection-dev-github)
    - [5.2 SSH connection Github-Prod](#52-ssh-connection-github-prod)
@@ -15,12 +15,14 @@
 
   - Add A record in DNS records on server admin
 
-### 2. Install Nginx
+### 2. Install Nginx and enable on boot 
 
   ```bash
   nginx -v
   sudo apt install nginx -y
   sudo systemctl status nginx
+  sudo systemctl enable nginx
+  sudo systemctl is-enabled nginx
   ```
 
 
@@ -39,7 +41,7 @@
   ```
 
 
-### 4. Install MongoDB
+### 4. Install MongoDB and enable on boot
 
 1. Import MongoDB public GPG key
 
@@ -121,6 +123,13 @@
       .\mongosh "mongodb://barry75@barryonweb.com:27017/chatappdb"
       ``` 
 
+11. Run MongoDB manually, check status, enable on boot  
+
+    ```bash
+    sudo systemctl start mongod
+    sudo systemctl status mongod
+    sudo systemctl enable mongod
+    ```
 
 
 ### 5. Establish SSH connections Dev-Github-Prod
@@ -158,7 +167,7 @@
   - Add the Private Key to GitHub Secrets
 
     - GitHub: Settings → Secrets and variables → Actions → New repository secret
-      - Paste full conetnt of private key github_ci
+      - Paste full content of private key github_ci
     - (Optional TODO) Add Known Hosts Fingerprint
 
   - Test connection
