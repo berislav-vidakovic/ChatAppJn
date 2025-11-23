@@ -2,12 +2,17 @@ package chatappjn.Controllers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import chatappjn.Models.User;
 import chatappjn.Repositories.UserRepository;
+import chatappjn.WebSockets.WebSocketHandler;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -15,11 +20,23 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @RestController
 @RequestMapping("/api/users")
 public class UsersController {
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
+  @Autowired
+  private ObjectMapper mapper;
+
+  @Autowired
+  private WebSocketHandler webSocketHandler;
+
 
   public UsersController(UserRepository userRepository) {
       this.userRepository = userRepository;
@@ -50,4 +67,69 @@ public class UsersController {
 
     return new ResponseEntity<>(response, HttpStatus.OK); // 200
   }    
+
+  @PostMapping("/register")
+  public ResponseEntity<?> registerUser(@RequestBody Map<String, Object> body) {
+    try {
+      // Expecting: {"login": "penny", "fullname": "Penny", "password": "pwd123"} 
+      String login = (String)body.get("login");
+      String fullName = (String)body.get("fullname");
+      String password = (String)body.get("password");
+      if (login == null || login.isBlank() || fullName == null || fullName.isBlank()
+          || password == null || password.isBlank()) {
+        Map<String, Object> response = Map.of(
+                  "acknowledged", false,
+                  "error", "Missing login or fullname or password"
+          );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
+      }
+      System.out.printf("Register request: login=%s, fullname=%s, password=%s%n", login, fullName, password);
+
+      boolean exists = userRepository.existsByLoginOrFullName(login, fullName);
+      if (exists) {
+        Map<String, Object> response = Map.of(
+                "acknowledged", false,
+                "error", "User  already exists"
+        );
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT); // 409
+      }
+      // Hash the password using BCrypt
+      String hashedPwd = passwordEncoder.encode(password);
+
+      // Create and persist user
+      User newUser = new User();
+      newUser.setLogin(login);
+      newUser.setFullName(fullName);
+      //newUser.setPwd(password);
+      newUser.setPwd(hashedPwd);
+      userRepository.save(newUser);
+      System.out.printf("New user inserted: %s%n", login);
+
+      Map<String, Object> response = Map.of(
+              "acknowledged", true,
+              "user", newUser
+      );
+
+      // Build WS message as Map
+      Map<String, Object> wsMessage = Map.of(
+          "type", "userRegister",
+          "status", "WsStatus.OK",
+          "data", response
+      );
+      // Convert Map to JSON string
+      String wsJson = mapper.writeValueAsString(wsMessage);
+
+      // Broadcast via WebSocket
+      webSocketHandler.broadcast(wsJson);
+
+      return new ResponseEntity<>(response, HttpStatus.CREATED); // 201
+    } 
+    catch (Exception e) {
+        e.printStackTrace();
+        Map<String, Object> errorResponse = Map.of( 
+          "acknowledged", false, "error", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR); // 500   
+    }
+  }
+
 }

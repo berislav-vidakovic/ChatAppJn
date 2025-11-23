@@ -21,6 +21,8 @@
 4. [Register backend as service](#4-register-backend-as-service)
 5. [CI/CD pipeline](#5-cicd-pipeline)
 6. [WebSocket](#6-websocket)
+7. [Get all users from MongoDB](#7-get-all-users-from-mongodb)
+8. [Register new User and hashing password](#8-register-new-user-and-hashing-password)
 
 
    
@@ -71,6 +73,12 @@ create remote repo, init, commit and  push
 ## 2. MongoDB
 <img src = "src/main/resources/static/images/mongodb.png" style="height:35px; margin-right: 15px;" /> 
 
+- Access MongoDB remotely or locally
+
+  ```bash
+  mongosh "mongodb://barry75@barryonweb.com:27017/chatappdb"
+  mongosh -u barry75 -p --authenticationDatabase chatappdb
+  ```
 
 - Create <a href="docs/MongoDb.md"> user, database, collection and document
 </a>
@@ -216,4 +224,23 @@ update Nginx config file </a>
   db.users.find()
   ```
 - Add Model, Repository, Controller
-- MogoDB automatically generates string id field
+- MongoDB automatically generates string id field
+
+## 8. Register new User and hashing password 
+
+- Extend collection documents with new field with password (update all or only documents where password is missing)
+
+  ```js
+  db.users.updateMany(
+    {},
+    { $set: { password: "" } }
+  )
+  db.users.updateMany(
+    { password: { $exists: false } },
+    { $set: { password: "" } }
+  )
+  ```
+
+- Add passwordEncoder dependency to pom.xml
+- Add <a href="docs/SecurityConfig.md">SecurityConfig.java</a> with @Bean PasswordEncoder and SecurityFilterChain   
+- Add @Autowired PasswordEncoder, ObjectMapper, WebSocketHandler to UsersController

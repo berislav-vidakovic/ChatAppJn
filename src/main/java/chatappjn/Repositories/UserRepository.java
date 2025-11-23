@@ -6,4 +6,5 @@ import chatappjn.Models.User;
 
 public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByLogin(String login);
+    boolean existsByLoginOrFullName(String login, String fullName);
 }

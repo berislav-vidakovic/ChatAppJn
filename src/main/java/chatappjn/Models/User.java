@@ -15,6 +15,9 @@ public class User {
     @Field("login")
     private String login;
 
+    @Field("password")
+    private String password;
+
     @Field("full_name")
     private String fullName;
 
@@ -45,6 +48,14 @@ public class User {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    public String getPwd() {
+        return password;
+    }
+
+    public void setPwd(String password) { 
+        this.password = password;
     }
 
     public String getFullName() {
