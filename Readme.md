@@ -78,7 +78,7 @@ create remote repo, init, commit and  push
 
 
 - Connect backend to DB
-  - Update application.yaml
+  - Update application.yaml with DB connection details
   - Add MongoDB dependency to pom.xml
   - Add Model
   - Add Repository - subclass of MongoRepository
@@ -202,4 +202,18 @@ update Nginx config file </a>
       check-interval-sec: 45
     ```
 
+## 7. Get all users from MongoDB
 
+- Create and populate users collection
+
+  ```js
+  db.users.insertMany([
+    { login: "shelly", full_name: "Sheldon", isonline: false },
+    { login: "lenny",  full_name: "Leonard", isonline: false },
+    { login: "raj",    full_name: "Rajesh",  isonline: false },
+    { login: "howie",  full_name: "Howard",  isonline: false }
+  ])
+  db.users.find()
+  ```
+- Add Model, Repository, Controller
+- MogoDB automatically generates string id field
