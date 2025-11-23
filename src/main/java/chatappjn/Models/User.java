@@ -2,6 +2,7 @@ package chatappjn.Models;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -10,8 +11,14 @@ public class User {
 
     @Id
     private String id; // MongoDB generates this automatically
+    
+    @Field("login")
     private String login;
+
+    @Field("full_name")
     private String fullName;
+
+    @Field("isonline")
     private boolean isOnline = false; // default false
 
     // Constructors
