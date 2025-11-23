@@ -14,12 +14,13 @@
 
 ## Table of Contents
 
-0. [Prerequisites](Prerequisites.md)
+0. [Prerequisites](docs/Prerequisites.md)
 1. [Java Spring backend](#1-java-spring-backend)
 2. [MongoDB](#2-mongodb)
 3. [Nginx configuration](#3-nginx-configuration)
 4. [Register backend as service](#4-register-backend-as-service)
 5. [CI/CD pipeline](#5-cicd-pipeline)
+6. [WebSocket](#6-websocket)
 
 
    
@@ -54,7 +55,7 @@
     ```
   **- Built jar file** target\chatappjn-0.0.1-SNAPSHOT.jar
 
-- Git  <a href="Git.md">
+- Git  <a href="docs/Git.md">
 create remote repo, init, commit and  push
 </a>
 
@@ -62,12 +63,16 @@ create remote repo, init, commit and  push
 
   - Create Controllers/PingController.java
 
+- Add CORS policy for frontend access
+
+  - Create <a href="docs/CORS.md">Config/CorsConfig.java</a>
+
 
 ## 2. MongoDB
 <img src = "src/main/resources/static/images/mongodb.png" style="height:35px; margin-right: 15px;" /> 
 
 
-- Create <a href="MongoDb.md"> user, database, collection and document
+- Create <a href="docs/MongoDb.md"> user, database, collection and document
 </a>
 
 
@@ -83,7 +88,7 @@ create remote repo, init, commit and  push
 <img src = "src/main/resources/static/images/nginx.jpg" style="height:35px; margin-right: 15px;" /> 
 
 
-- Create <a href="basic-nginx-cfg.md">
+- Create <a href="docs/basic-nginx-cfg.md">
 basic Nginx config file chatjn.barryonweb.com
 </a>
  
@@ -102,7 +107,7 @@ basic Nginx config file chatjn.barryonweb.com
   sudo certbot --nginx -d chatjn.barryonweb.com
   ```
 
-  - SSL manager will <a href="ssl-nginx-cfg.md">
+  - SSL manager will <a href="docs/ssl-nginx-cfg.md">
 update Nginx config file </a>
 
 - Check Nginx syntax and reload
@@ -138,7 +143,7 @@ update Nginx config file </a>
 
 ## 4. Register backend as service
 
-- Create <a href = "Service.md"> chatappjn.service file
+- Create <a href = "docs/Service.md"> chatappjn.service file
 </a> and copy to /etc/systemd/system
 
   ```bash
@@ -173,12 +178,28 @@ update Nginx config file </a>
 
 
   - Create folder .github\workflows 
-  - Add <a href="initial-yaml.md">yaml file</a> for deployment, reload Nginx and restart backend service
+  - Add <a href="docs/initial-yaml.md">yaml file</a> for deployment, reload Nginx and restart backend service
   - Github
     - Repo → Settings → Secrets and variables → Actions
       - Create SSH_PRIVATE_KEY in Repository Secrets
       - Copy content of ~\\.ssh\github_ci private key
 
 
+## 6. Websocket 
+
+- Add 4 Java files
+  - Services/<a href="docs/Client.md">Client.java</a>
+  - Services/<a href="docs/IdleMonitor.md">IdleMonitor.java</a>
+  - WebSockets/<a href="docs/SessionMonitor.md">SessionMonitor.java</a>
+  - WebSockets/<a href="docs/WebSocketHandler.md">WebSocketHandler.java</a>
+
+- Add <a href="docs/WebSocketCfg.md">WebSocketConfig file</a>
+- Add timeout parameters in application.yaml
+
+    ```yaml
+    websocket:
+      timeout-mins: 1
+      check-interval-sec: 45
+    ```
 
 

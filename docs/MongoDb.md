@@ -1,6 +1,6 @@
 ## MongoDB
 
-![MongoDB](src/main/resources/static/images/mongodb.png)
+<img src = "../src/main/resources/static/images/mongodb.png" style="height:35px; margin-right: 15px;" /> 
 
 
 ### 1. Create DB,  create user within, Show DBs
