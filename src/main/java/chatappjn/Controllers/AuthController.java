@@ -1,9 +1,11 @@
 package chatappjn.Controllers;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Http;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import chatappjn.Models.RefreshToken;
+import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.WebSockets.WebSocketHandler;
 
 // POST /api/auth/refresh
@@ -21,12 +26,34 @@ import chatappjn.WebSockets.WebSocketHandler;
 public class AuthController {
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
     private WebSocketHandler webSocketHandler;
 
     @Autowired
     private ObjectMapper mapper;
 
     public AuthController() {
+    }
+
+    private String checkReceivedToken(String refreshToken) {
+      if (refreshToken == null || refreshToken.isEmpty()) {
+          return ""; // Treat missing token as "created/new" status
+      }
+
+      var tokenOpt = refreshTokenRepository.findByToken(refreshToken);
+
+      if (tokenOpt.isEmpty()) {
+          return ""; // token does not exist
+      }
+
+      RefreshToken token = tokenOpt.get();
+      if (token.getExpiresAt().isBefore(Instant.now())) {
+          return ""; // token expired
+      }
+
+      return refreshToken; // token exists and is valid
     }
 
     @PostMapping("/refresh")
@@ -46,12 +73,18 @@ public class AuthController {
         }
         System.out.println("Received POST /auth/refresh with valid ID: " + parsedClientId.toString());
         String refreshToken = body.get("refreshToken");
-        if (refreshToken == null) refreshToken = "dummyRefreshToken";
+        
+        String refToken = checkReceivedToken(refreshToken);
+        HttpStatus statusCode = HttpStatus.OK;
+        if( refToken.isEmpty() ) {
+          refToken = "dummyRefreshToken";
+          statusCode = HttpStatus.CREATED;
+        }
 
         // Return new tokens
         Map<String, Object> response = Map.of(
                 "accessToken", "dummyAccessToken",
-                "refreshToken", refreshToken
+                "refreshToken", refToken
         );
 
         Map<String, Object> wsMessage = Map.of(
@@ -64,7 +97,7 @@ public class AuthController {
         // Broadcast via WebSocket
         webSocketHandler.broadcast(wsJson);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(statusCode).body(response);
       } 
       catch (Exception e) {
             e.printStackTrace();

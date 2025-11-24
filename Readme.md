@@ -23,6 +23,8 @@
 6. [WebSocket](#6-websocket)
 7. [Get all users from MongoDB](#7-get-all-users-from-mongodb)
 8. [Register new User and hashing password](#8-register-new-user-and-hashing-password)
+9. [JWT Authentication incremental build](#9-jwt-authentication-incremental-build)
+
 
 
    
@@ -260,5 +262,19 @@ update Nginx config file </a>
     .requestMatchers("/api/auth/refresh").permitAll() 
     ```
 
+### 2. Create Model and Repository with Controller check
+
+- Add RefreshToken class (Model)
+- Add RefreshTokenRepository class
+- Check in Controller the received token
+  - if exists
+    - if expired send code 201 (Created)
+    - if valid send code 200 (OK)
+  - if it does not exist send code 201 (Created)
+  - Response sending 
+    - dummyAccessToken
+    - refreshToken
+      - dummy for status 201
+      - received one for status 200
 
 
