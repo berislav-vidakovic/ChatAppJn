@@ -21,7 +21,10 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable())
         .cors(cors -> {}) // enables CORS support
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/**").permitAll()  // allow all REST endpoints
+            .requestMatchers("/api/ping").permitAll()  
+            .requestMatchers("/api/pingdb").permitAll()  
+            .requestMatchers("/api/users/**").permitAll()
+            .requestMatchers("/api/auth/refresh").permitAll()  
             .requestMatchers("/websocket/**").permitAll() // allow WS handshake
             .anyRequest().authenticated()     // any other request requires auth
         );

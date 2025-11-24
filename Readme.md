@@ -244,3 +244,21 @@ update Nginx config file </a>
 - Add passwordEncoder dependency to pom.xml
 - Add <a href="docs/SecurityConfig.md">SecurityConfig.java</a> with @Bean PasswordEncoder and SecurityFilterChain   
 - Add @Autowired PasswordEncoder, ObjectMapper, WebSocketHandler to UsersController
+
+## 9. JWT Authentication incremental build
+
+### 1. Refresh endpoint returning dummy tokens
+
+- AuthorizationController.java 
+  - Received Request: { refreshToken } 
+  - Sending Response  { dummyAccessToken, dummyRefreshToken }
+  - Sending WS broadcast { type: userSessionUpdate, data } 
+
+- Enable endpoint /api/auth/refresh in SecurityConfig.java
+
+    ```java
+    .requestMatchers("/api/auth/refresh").permitAll() 
+    ```
+
+
+
