@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import chatappjn.Models.RefreshToken;
+import chatappjn.Models.User;
 import chatappjn.Repositories.RefreshTokenRepository;
+import chatappjn.Repositories.UserRepository;
 import chatappjn.WebSockets.WebSocketHandler;
 
 // POST /api/auth/refresh
@@ -29,6 +31,9 @@ public class AuthController {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private WebSocketHandler webSocketHandler;
 
     @Autowired
@@ -37,23 +42,23 @@ public class AuthController {
     public AuthController() {
     }
 
-    private String checkReceivedToken(String refreshToken) {
+    private RefreshToken checkReceivedToken(String refreshToken) {
       if (refreshToken == null || refreshToken.isEmpty()) {
-          return ""; // Treat missing token as "created/new" status
+          return null; // Treat missing token as "created/new" status
       }
 
       var tokenOpt = refreshTokenRepository.findByToken(refreshToken);
 
       if (tokenOpt.isEmpty()) {
-          return ""; // token does not exist
+          return null; // token does not exist
       }
 
       RefreshToken token = tokenOpt.get();
       if (token.getExpiresAt().isBefore(Instant.now())) {
-          return ""; // token expired
+          return null; // token expired
       }
 
-      return refreshToken; // token exists and is valid
+      return token; // token exists and is valid
     }
 
     @PostMapping("/refresh")
@@ -74,17 +79,38 @@ public class AuthController {
         System.out.println("Received POST /auth/refresh with valid ID: " + parsedClientId.toString());
         String refreshToken = body.get("refreshToken");
         
-        String refToken = checkReceivedToken(refreshToken);
-        HttpStatus statusCode = HttpStatus.OK;
-        if( refToken.isEmpty() ) {
-          refToken = "dummyRefreshToken";
-          statusCode = HttpStatus.CREATED;
+        RefreshToken refToken = checkReceivedToken(refreshToken);
+        if( refToken == null ) { // invalid or expired token
+          return ResponseEntity
+                  .status(HttpStatus.UNAUTHORIZED)
+                  .body(Map.of("error", "Refresh token missing, invalid or expired"));
         }
+        // valid token
+        // 1- get user by userId from refreshToken and set isOnline = true
+        var userOpt = userRepository.findById(refToken.getUserId());
+        if (userOpt.isEmpty()) {
+          return ResponseEntity
+                  .status(HttpStatus.UNAUTHORIZED)
+                  .body(Map.of("error", "User not found for the provided refresh token"));
+        }
+        User user = userOpt.get();
+        String userId = user.getId();
+        user.setOnline(true);
+        userRepository.save(user);
+
+        // 2-renew refreshToken and Expiry date and save to MongoDB collection (update)
+        refreshToken = "newShellyRefreshToken";
+        Instant expiresAt = Instant.now().plusSeconds(14 * 24 * 60 * 60); // 14 days
+        refToken.setToken(refreshToken);
+        refToken.setExpiresAt(expiresAt);
+        refreshTokenRepository.save(refToken);
 
         // Return new tokens
         Map<String, Object> response = Map.of(
                 "accessToken", "dummyAccessToken",
-                "refreshToken", refToken
+                "refreshToken", refreshToken,
+                "userId", userId,
+                "isOnline", true
         );
 
         Map<String, Object> wsMessage = Map.of(
@@ -97,7 +123,7 @@ public class AuthController {
         // Broadcast via WebSocket
         webSocketHandler.broadcast(wsJson);
 
-        return ResponseEntity.status(statusCode).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
       } 
       catch (Exception e) {
             e.printStackTrace();

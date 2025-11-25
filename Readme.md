@@ -262,11 +262,14 @@ update Nginx config file </a>
     .requestMatchers("/api/auth/refresh").permitAll() 
     ```
 
-### 2. Create Model and Repository with Controller check
+### 2. Create Model and Repository with dummy Controller check
 
-- Add RefreshToken class (Model)
-- Add RefreshTokenRepository class
-- Check in Controller the received token
+- Add RefreshToken class (Model) that matches MongoDB collection
+  ```js
+  { "_id", "userid", "token", "expires" } 
+  ```
+- Add RefreshTokenRepository class   
+- Check in Controller if the received token exists in MongoDB collection
   - if exists
     - if expired send code 201 (Created)
     - if valid send code 200 (OK)
@@ -276,5 +279,57 @@ update Nginx config file </a>
     - refreshToken
       - dummy for status 201
       - received one for status 200
+
+### 3. Controller check upgrade
+
+- For invalid or expired refreshToken
+  - Return HttpStatus.UNAUTHORIZED (401)  
+- For valid refreshToken
+  - Find user in users collection by userId from refreshToken collection
+  - Update user status to online
+  - Generate new refreshToken
+  - Return HttpStatus.OK (200) with { dummyAccessToken, refreshToken, userId, isOnline: true }   
+- MongoDB CRUD actions
+  - Delete dummy users from user collection
+    ```js
+    db.users.deleteOne({login:'p'})
+    ```
+
+  - Read userid by full name:
+    ```js
+    db.users.find({full_name:'Sheldon'},{_id:1})
+    ```
+    OUTPUT: [ { _id: ObjectId('692326918a68875daa63b113') } ]  
+  - Create dummy token with valid userid in MongoDB:
+    ```js
+    db.refreshTokens.insertOne({ 
+      userid: ObjectId('692326918a68875daa63b113'), 
+      token:"initialRefreshToken", 
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) })
+    ```  
+  - Update token by userId
+    ```js
+    db.refreshTokens.updateOne(
+      { userid: ObjectId("692326918a68875daa63b113") },  // filter
+      {
+        $set: {
+          token: "validRefreshToken",
+          expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        }
+      }
+    );
+    ```
+- Added UserRepository reference (Autowired) to AuthCntroller
+  - Update user status to online for user in users collection found by userId from refreshToken collection
+
+- Renewed refreshToken dummy: newRefreshToken
+
+- Testing on Frontend  
+  1. Request { refreshToken: dummyRefreshToken }  
+      - Expected Response: HttpStatus.UNAUTHORIZED (401)
+  2. Request { refreshToken: validRefreshToken }  
+      - Token valid - renew refreshToken and Expiry date and save to MongoDB collection (update)
+      - Expected Response: HttpStatus.OK (200) { dummyAccessToken, newRefreshToken, userId, isOnline: true }
+
 
 

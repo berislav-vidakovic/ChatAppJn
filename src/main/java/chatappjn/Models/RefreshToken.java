@@ -4,14 +4,21 @@ import java.time.Instant;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document(collection = "refreshTokens")
 public class RefreshToken {
 
     @Id
     private String id;           // MongoDB ObjectId
+
+    @Field("userid")
     private String userId;       // store user ID (from Users collection)
+
+    @Field("token")
     private String token;        // refresh token string
+    
+    @Field("expires")
     private Instant expiresAt;   // expiration timestamp
 
     // Constructors
