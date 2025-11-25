@@ -290,24 +290,24 @@ update Nginx config file </a>
   - Generate new refreshToken
   - Return HttpStatus.OK (200) with { dummyAccessToken, refreshToken, userId, isOnline: true }   
 - MongoDB CRUD actions
-  - Delete dummy users from user collection
+  - **Delete** dummy users from user collection
     ```js
     db.users.deleteOne({login:'p'})
     ```
 
-  - Read userid by full name:
+  - **Read** userid by full name:
     ```js
     db.users.find({full_name:'Sheldon'},{_id:1})
     ```
     OUTPUT: [ { _id: ObjectId('692326918a68875daa63b113') } ]  
-  - Create dummy token with valid userid in MongoDB:
+  - **Create** dummy token with valid userid in MongoDB:
     ```js
     db.refreshTokens.insertOne({ 
       userid: ObjectId('692326918a68875daa63b113'), 
       token:"initialRefreshToken", 
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) })
     ```  
-  - Update token by userId
+  - **Update** token by userId
     ```js
     db.refreshTokens.updateOne(
       { userid: ObjectId("692326918a68875daa63b113") },  // filter
@@ -319,7 +319,7 @@ update Nginx config file </a>
       }
     );
     ```
-- Added UserRepository reference (Autowired) to AuthCntroller
+- Added UserRepository reference (Autowired) to AuthController
   - Update user status to online for user in users collection found by userId from refreshToken collection
 
 - Renewed refreshToken dummy: newRefreshToken
@@ -331,5 +331,21 @@ update Nginx config file </a>
       - Token valid - renew refreshToken and Expiry date and save to MongoDB collection (update)
       - Expected Response: HttpStatus.OK (200) { dummyAccessToken, newRefreshToken, userId, isOnline: true }
 
+### 4. Valid refresh token path - token renewal
 
+- Added UserMonitor
+- Added useridle timeout and interval into application.yaml
+- Updated SessionMonitor for Autologout if user is logged in
+- Added JWT dependencies into pom.xml
+- Added Config/JwtUtil.java with static generateToken method
+- AuthController
+  - Call UserMonitor::updateUserActivity on user login (valid refreshToken)
+  - Generate new refreshToken and save to DB 
+    ```java
+    String refreshToken = UUID.randomUUID().toString();
+    ```
+  - Generate new accessToken 
+    ```java
+    String newAccessToken = JwtUtil.generateToken(user.getId(), user.getLogin());
+    ```
 

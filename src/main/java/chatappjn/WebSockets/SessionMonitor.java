@@ -14,7 +14,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import chatappjn.Services.IdleMonitor;
-//import com.gamesj.Services.UserMonitor;
+import chatappjn.Services.UserMonitor;
 import chatappjn.Services.Client;
 
 
@@ -22,8 +22,8 @@ import chatappjn.Services.Client;
 @Service
 public class SessionMonitor extends IdleMonitor<WebSocketSession> {
 
-    //@Autowired
-    //private UserMonitor userMonitor;
+    @Autowired
+    private UserMonitor userMonitor;
 
     private final ConcurrentHashMap<WebSocketSession, Client> sessionMap = new ConcurrentHashMap<>();
 
@@ -65,7 +65,7 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
       LocalDateTime now = LocalDateTime.now();
       Duration IDLE_TIMEOUT = Duration.ofMinutes(idleTimeoutMinutes);
       // Check and collect idle WS connections  ...
-      HashMap<WebSocketSession, Integer> sessionsToClose = new HashMap<>();
+      HashMap<WebSocketSession, String> sessionsToClose = new HashMap<>();
       for (Map.Entry<WebSocketSession, Client> entry : sessionMap.entrySet()) {
         WebSocketSession session = entry.getKey();
         Client client = entry.getValue();
@@ -76,8 +76,7 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
         if (Duration.between(client.getTimeStamp(), now).compareTo(IDLE_TIMEOUT) > 0) {
           try {
             System.out.println("===== WS CLOSING due to inactivity: clientId=" + client.getClientId() );            
-            //int userId = userMonitor.getUserIdByClientId(id);
-            int userId = -1;
+            String userId = userMonitor.getUserIdByClientId(id);
             System.out.println("===== UserId= " + userId );                   
             sessionsToClose.put(session, userId);            
           } 
@@ -86,10 +85,9 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
           }
         }
       }
-      // AutoLogout ...
-      /*
-      for (Map.Entry<WebSocketSession, Integer> entry : sessionsToClose.entrySet()) {
-        int userId  = entry.getValue();
+      // AutoLogout ...      
+      for (Map.Entry<WebSocketSession, String> entry : sessionsToClose.entrySet()) {
+        String userId  = entry.getValue();
         try {
           if( userId != UserMonitor.EMPTY_USERID ){
             System.out.println("===== WS CLOSING - AutoLogout ...." );
@@ -100,9 +98,9 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
           e.printStackTrace();
         }
       }
-      */
+      
       // Close WS connections ...
-      for (Map.Entry<WebSocketSession, Integer> entry : sessionsToClose.entrySet()) {
+      for (Map.Entry<WebSocketSession, String> entry : sessionsToClose.entrySet()) {
         WebSocketSession session = entry.getKey();
         if (session.isOpen()) {
           try {

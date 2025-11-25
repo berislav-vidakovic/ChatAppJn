@@ -16,16 +16,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import chatappjn.Config.JwtUtil;
 import chatappjn.Models.RefreshToken;
 import chatappjn.Models.User;
 import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.Repositories.UserRepository;
+import chatappjn.Services.UserMonitor;
 import chatappjn.WebSockets.WebSocketHandler;
 
 // POST /api/auth/refresh
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    @Autowired
+    private UserMonitor userMonitor;
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
@@ -97,17 +102,22 @@ public class AuthController {
         String userId = user.getId();
         user.setOnline(true);
         userRepository.save(user);
+        userMonitor.updateUserActivity(user.getId(), parsedClientId);
 
         // 2-renew refreshToken and Expiry date and save to MongoDB collection (update)
-        refreshToken = "newShellyRefreshToken";
+        refreshToken = UUID.randomUUID().toString();
         Instant expiresAt = Instant.now().plusSeconds(14 * 24 * 60 * 60); // 14 days
         refToken.setToken(refreshToken);
         refToken.setExpiresAt(expiresAt);
         refreshTokenRepository.save(refToken);
 
+        // 3 - renew accessToken
+        String newAccessToken = JwtUtil.generateToken(
+          user.getId(), user.getLogin());
+
         // Return new tokens
         Map<String, Object> response = Map.of(
-                "accessToken", "dummyAccessToken",
+                "accessToken", newAccessToken,
                 "refreshToken", refreshToken,
                 "userId", userId,
                 "isOnline", true

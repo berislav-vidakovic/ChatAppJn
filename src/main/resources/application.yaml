@@ -10,3 +10,8 @@ server:
 websocket:
   timeout-mins: 1
   check-interval-sec: 45
+useridle:
+  timeout-mins: 2
+  check-interval-sec: 45
+
+  
