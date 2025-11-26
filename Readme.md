@@ -293,6 +293,7 @@ update Nginx config file </a>
   - **Delete** dummy users from user collection
     ```js
     db.users.deleteOne({login:'p'})
+    db.users.deleteMany({login: { $in:['b','c']}})
     ```
 
   - **Read** userid by full name:
@@ -337,7 +338,23 @@ update Nginx config file </a>
 - Added useridle timeout and interval into application.yaml
 - Updated SessionMonitor for Autologout if user is logged in
 - Added JWT dependencies into pom.xml
-- Added Config/JwtUtil.java with static generateToken method
+- Added Config/JwtBuilder.java 
+  ```java
+  public class JwtBuilder {
+    private static final Key SECRET_KEY = 
+      Keys.hmacShaKeyFor("KeyForJWTauthenticationInChatApp".getBytes());
+    private static final long EXPIRATION_TIME_MS = 60*60*1000; // 1 hour
+    public static String generateToken(String userId, String username) {
+      return Jwts.builder()
+              .setSubject(username)
+              .claim("userId", userId)
+              .setIssuedAt(new Date())
+              .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
+              .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+              .compact();
+    }
+  }
+  ```
 - AuthController
   - Call UserMonitor::updateUserActivity on user login (valid refreshToken)
   - Generate new refreshToken and save to DB 
@@ -346,6 +363,30 @@ update Nginx config file </a>
     ```
   - Generate new accessToken 
     ```java
-    String newAccessToken = JwtUtil.generateToken(user.getId(), user.getLogin());
+    String newAccessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
     ```
+
+### 5. Handling Request with accessToken in Authorization Bearer header
+
+- Added static method getSecretKey in Config/JwtBuilder.java
+- Added file Config/JwtValidator.java 
+  ```java
+  try { 
+    Claims claims = Jwts.parserBuilder()
+      .setSigningKey(JwtBuilder.getSecretKey())  
+      .build()
+      .parseClaimsJws(accessJWT)
+      .getBody();    
+    request.setAttribute("userId", claims.getSubject());
+  } 
+  catch (Exception e) {
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.getWriter().write("Invalid or expired token");
+    return;
+  }
+  ```
+  - Request enters JwtValidator filter first. The filter runs before any controller
+
+- Response Status code For missing Authorization header: 400 (Bad Request) 
+- Response Status code For invalid/expired accessToken: 401 (Unauthorized) 
 

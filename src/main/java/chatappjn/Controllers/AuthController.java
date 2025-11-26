@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Http;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import chatappjn.Config.JwtUtil;
+import chatappjn.Config.JwtBuilder;
 import chatappjn.Models.RefreshToken;
 import chatappjn.Models.User;
 import chatappjn.Repositories.RefreshTokenRepository;
@@ -48,22 +48,18 @@ public class AuthController {
     }
 
     private RefreshToken checkReceivedToken(String refreshToken) {
-      if (refreshToken == null || refreshToken.isEmpty()) {
-          return null; // Treat missing token as "created/new" status
-      }
-
-      var tokenOpt = refreshTokenRepository.findByToken(refreshToken);
-
-      if (tokenOpt.isEmpty()) {
-          return null; // token does not exist
-      }
+      if (refreshToken == null || refreshToken.isEmpty()) 
+          return null; // Missing token
+        
+      Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByToken(refreshToken);
+      if (tokenOpt.isEmpty()) 
+          return null; // Token not found in DB
 
       RefreshToken token = tokenOpt.get();
-      if (token.getExpiresAt().isBefore(Instant.now())) {
-          return null; // token expired
-      }
+      if (token.getExpiresAt().isBefore(Instant.now())) 
+          return null; // Token expired
 
-      return token; // token exists and is valid
+      return token; // Valid Token
     }
 
     @PostMapping("/refresh")
@@ -112,7 +108,7 @@ public class AuthController {
         refreshTokenRepository.save(refToken);
 
         // 3 - renew accessToken
-        String newAccessToken = JwtUtil.generateToken(
+        String newAccessToken = JwtBuilder.generateToken(
           user.getId(), user.getLogin());
 
         // Return new tokens

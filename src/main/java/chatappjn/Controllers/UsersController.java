@@ -22,6 +22,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+// GET /api/users/all
+// POST /api/users/register
 @RestController
 @RequestMapping("/api/users")
 public class UsersController {
