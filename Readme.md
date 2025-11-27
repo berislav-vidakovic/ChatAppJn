@@ -390,3 +390,14 @@ update Nginx config file </a>
 - Response Status code For missing Authorization header: 400 (Bad Request) 
 - Response Status code For invalid/expired accessToken: 401 (Unauthorized) 
 
+### 6. Adding support for Frontend 2-retry pattern   
+
+- Adjust filter to return JSON for invalid/expired token and missing authorization header - updated Config/JwtValidator.java 
+  ```java
+  response.setContentType("application/json");
+  Map<String, Object> error = Map.of(
+    "acknowledged", false,
+    "error", "Invalid or expired token"
+  );
+  response.getWriter().write(new ObjectMapper().writeValueAsString(error));  
+  ```

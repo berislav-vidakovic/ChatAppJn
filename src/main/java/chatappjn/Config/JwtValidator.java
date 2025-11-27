@@ -9,7 +9,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class JwtValidator extends OncePerRequestFilter {
@@ -46,13 +49,23 @@ public class JwtValidator extends OncePerRequestFilter {
       } 
       catch (Exception e) {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getWriter().write("Invalid or expired token");
+        response.setContentType("application/json");
+        Map<String, Object> error = Map.of(
+            "acknowledged", false,
+            "error", "Invalid or expired token"
+        );
+        response.getWriter().write(new ObjectMapper().writeValueAsString(error));            
         return;
       }
     } 
     else { // missing Bearer in Authorization header section
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-      response.getWriter().write("Missing Authorization header");
+      response.setContentType("application/json");
+      Map<String, Object> error = Map.of(
+          "acknowledged", false,
+          "error", "Missing Authorization header"
+      );
+      response.getWriter().write(new ObjectMapper().writeValueAsString(error));
       return;
     }
     filterChain.doFilter(request, response);
