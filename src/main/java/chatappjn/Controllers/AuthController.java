@@ -1,6 +1,8 @@
 package chatappjn.Controllers;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.UUID;
 
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,9 +29,14 @@ import chatappjn.Services.UserMonitor;
 import chatappjn.WebSockets.WebSocketHandler;
 
 // POST /api/auth/refresh
+// POST /api/auth/login
+// POST /api/auth/logout
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private UserMonitor userMonitor;
@@ -137,4 +146,193 @@ public class AuthController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body) {
+    try {
+      // Validate clientId
+      UUID parsedClientId;
+      try {
+        parsedClientId = UUID.fromString(clientId);
+      } 
+      catch (IllegalArgumentException e) {
+        Map<String, Object> response = Map.of(
+                "acknowledged", false,
+                "error", "Missing or invalid ID"
+          );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
+      }
+      System.out.println("Received POST /api/auth/login with valid ID: " + parsedClientId.toString());
+
+      // Validate userId
+      if (!body.containsKey("userId")) {
+        Map<String, Object> response = Map.of(
+            "acknowledged", false,
+            "error", "Missing 'userId' field"
+          );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
+      }
+      String userId = body.get("userId").toString();
+
+      // Extract password field
+      if (!body.containsKey("password")) {
+        Map<String, Object> response = Map.of(
+            "acknowledged", false,
+            "error", "Missing 'password' field"
+          );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
+      }
+      String password = body.get("password").toString();
+      System.out.println("Password received for login: " + password);
+
+      // Find user
+      Optional<User> optionalUser = userRepository.findById(userId);
+      if (optionalUser.isEmpty()) {
+        Map<String, Object> response = Map.of(
+              "acknowledged", false,
+              "error", "UserID Not found"
+        );
+        return new ResponseEntity<>(response, HttpStatus.NO_CONTENT); // 204
+      }
+      User user = optionalUser.get();
+
+      // Password validation 
+      // if no hashed pwd in DB => new user, first time password hashing
+      if( user.getPwd().isEmpty() ){
+        // Hash the password using BCrypt
+        String hashedPwd = passwordEncoder.encode(password);
+        user.setPwd(hashedPwd);
+        userRepository.save(user);
+      }       
+      else {
+        boolean passwordsMatch = passwordEncoder.matches(password, user.getPwd());
+        if( !passwordsMatch ) {
+          Map<String, Object> response = Map.of(
+                "acknowledged", false,
+                "error", "Invalid password"
+          );
+          return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED); // 401
+        }
+      }
+      
+      // Issue access token
+      String accessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
+
+      // Issue and store refresh token 
+      String refreshToken = java.util.UUID.randomUUID().toString();
+      LocalDateTime expiryDate = LocalDateTime.now().plusDays(7); // valid for 7 days
+      Instant expiryInstant = expiryDate.atZone(ZoneId.systemDefault()).toInstant();
+
+      refreshTokenRepository.deleteByUserId(user.getId());
+      RefreshToken tokenEntity = new RefreshToken();
+      tokenEntity.setUserId(user.getId());
+      tokenEntity.setToken(refreshToken);
+      tokenEntity.setExpiresAt(expiryInstant);
+      refreshTokenRepository.save(tokenEntity);
+
+      // Set user online
+      user.setOnline(true);
+      userRepository.save(user);
+      userMonitor.updateUserActivity(user.getId(), parsedClientId);
+
+      Map<String, Object> response = Map.of(
+          "userId", userId,
+          "isOnline", true,
+          "accessToken", accessToken,           
+          "refreshToken", refreshToken
+      );
+
+      // var response = new { userId, isOnline = true };
+      Map<String, Object> wsMessage = Map.of(
+          "type", "userSessionUpdate",
+          "status", "WsStatus.OK",
+          "data", response
+      );
+      // Convert Map to JSON string
+      String wsJson = mapper.writeValueAsString(wsMessage);
+      // Broadcast via WebSocket
+      webSocketHandler.broadcast(wsJson);
+
+      return new ResponseEntity<>(response, HttpStatus.OK); // 200
+    } 
+    catch (Exception e) {
+      e.printStackTrace();
+      Map<String, Object> errorResponse = Map.of( 
+        "acknowledged", false, "error", e.getMessage());
+      return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR); // 500   
+    }
+  }
+
+
+  @PostMapping("/logout")
+  public ResponseEntity<?> logout(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body) {
+    try {
+      // Validate clientId
+      System.out.println("Received POST /api/auth/logout ");
+      UUID parsedClientId;
+      try {
+        parsedClientId = UUID.fromString(clientId);
+      } catch (IllegalArgumentException e) {
+        Map<String, Object> response = Map.of(
+          "acknowledged", false,
+          "error", "Missing or invalid ID"
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
+      }
+      System.out.println("Received POST /api/auth/logout with valid ID: " + parsedClientId.toString());
+
+      // Validate userId
+      if (!body.containsKey("userId")) {
+        Map<String, Object> response = Map.of(
+          "acknowledged", false,
+          "error", "Missing 'userId' field"
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
+      }
+      String userId = body.get("userId").toString();
+
+      // Find user
+      Optional<User> optionalUser = userRepository.findById(userId);
+      if (optionalUser.isEmpty()) {
+        Map<String, Object> response = Map.of(
+          "acknowledged", false,
+          "error", "UserID Not found"
+        );
+        return new ResponseEntity<>(response, HttpStatus.NO_CONTENT); // 204
+      }
+      User user = optionalUser.get();
+      user.setOnline(false);
+      userRepository.save(user);
+
+      // Clear refresh token from DB
+      System.out.println("Deleting refresh tokens for userId: " + userId);
+      refreshTokenRepository.deleteByUserId(userId);
+      System.out.println("Deleting done ");
+
+      userMonitor.removeUser(userId);       
+
+      Map<String, Object> response = Map.of(
+        "userId", userId,
+        "isOnline", false
+      );
+
+      Map<String, Object> wsMessage = Map.of(
+        "type", "userSessionUpdate",
+        "status", "WsStatus.OK",
+        "data", response
+      );
+      // Convert Map to JSON string
+      String wsJson = mapper.writeValueAsString(wsMessage);
+      // Broadcast via WebSocket
+      webSocketHandler.broadcast(wsJson);
+
+      return new ResponseEntity<>(response, HttpStatus.OK); // 200
+    } 
+    catch (Exception e) {
+      e.printStackTrace();
+      Map<String, Object> errorResponse = Map.of( 
+        "acknowledged", false, "error", e.getMessage());
+      return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR); // 500   
+    }
+  }
 }

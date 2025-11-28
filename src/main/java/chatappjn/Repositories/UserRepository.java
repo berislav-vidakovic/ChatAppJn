@@ -5,6 +5,6 @@ import java.util.Optional;
 import chatappjn.Models.User;
 
 public interface UserRepository extends MongoRepository<User, String> {
-    Optional<User> findByLogin(String login);
+    Optional<User> findById(String id);
     boolean existsByLoginOrFullName(String login, String fullName);
 }

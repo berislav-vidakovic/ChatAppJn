@@ -24,14 +24,15 @@ public class JwtValidator extends OncePerRequestFilter {
 
     String headerSectionAuth = request.getHeader("Authorization");
 
-    // Allow endpoints without token
+    // White list - Allow endpoints without token
     String path = request.getRequestURI();
     if( path.startsWith("/api/ping") ||
         path.startsWith("/api/pingdb") ||
         path.startsWith("/api/users/all") ||
         //path.startsWith("/api/users/register") ||
         path.startsWith("/websocket") ||
-        path.startsWith("/api/auth/refresh") 
+        path.startsWith("/api/auth/refresh") ||
+        path.startsWith("/api/auth/login") 
       ){
           filterChain.doFilter(request, response);
           return;

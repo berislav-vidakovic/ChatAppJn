@@ -50,7 +50,7 @@ public class UsersController {
     if (users.isEmpty()) 
       return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204
 
-    UUID id = UUID.randomUUID();
+    UUID clientId = UUID.randomUUID();
 
     // build base URL from request
     String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString(); 
@@ -62,7 +62,7 @@ public class UsersController {
     );
 
     Map<String, Object> response = Map.of(
-        "id", id.toString(),
+        "id", clientId.toString(),
         "users", users,
         "techstack", techstack
     );

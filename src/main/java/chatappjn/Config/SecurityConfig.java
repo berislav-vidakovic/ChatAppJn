@@ -18,16 +18,18 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-        .csrf(csrf -> csrf.disable())
-        .cors(cors -> {}) // enables CORS support
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/ping").permitAll()  
-            .requestMatchers("/api/pingdb").permitAll()  
-            .requestMatchers("/api/users/**").permitAll()
-            .requestMatchers("/api/auth/refresh").permitAll()  
-            .requestMatchers("/websocket/**").permitAll() // allow WS handshake
-            .anyRequest().authenticated()     // any other request requires auth
-        );
+      .csrf(csrf -> csrf.disable())
+      .cors(cors -> {}) // enables CORS support
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers("/api/ping").permitAll()  
+        .requestMatchers("/api/pingdb").permitAll()  
+        .requestMatchers("/api/users/**").permitAll()
+        .requestMatchers("/api/auth/refresh").permitAll()  
+        .requestMatchers("/api/auth/login").permitAll()  
+        .requestMatchers("/api/auth/logout").permitAll()  
+        .requestMatchers("/websocket/**").permitAll() // allow WS handshake
+        .anyRequest().authenticated()     // any other request requires auth
+      );
 
     return http.build();
   }

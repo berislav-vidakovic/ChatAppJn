@@ -24,8 +24,7 @@
 7. [Get all users from MongoDB](#7-get-all-users-from-mongodb)
 8. [Register new User and hashing password](#8-register-new-user-and-hashing-password)
 9. [JWT Authentication incremental build](#9-jwt-authentication-incremental-build)
-
-
+10. [Login with password and logout](#10-login-with-password-and-logout)
 
    
 
@@ -294,11 +293,15 @@ update Nginx config file </a>
     ```js
     db.users.deleteOne({login:'p'})
     db.users.deleteMany({login: { $in:['b','c']}})
+    db.users.deleteMany({login: { $nin:['lenny','shelly','raj','howie']}})
+
     ```
 
-  - **Read** userid by full name:
+  - **Read** userid by full name, user count, particular fields:
     ```js
     db.users.find({full_name:'Sheldon'},{_id:1})
+    db.users.countDocuments()
+    db.users.find({},{login:1,_id:0,isonline:1})
     ```
     OUTPUT: [ { _id: ObjectId('692326918a68875daa63b113') } ]  
   - **Create** dummy token with valid userid in MongoDB:
@@ -308,7 +311,7 @@ update Nginx config file </a>
       token:"initialRefreshToken", 
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) })
     ```  
-  - **Update** token by userId
+  - **Update** token by userId / set all users to offline
     ```js
     db.refreshTokens.updateOne(
       { userid: ObjectId("692326918a68875daa63b113") },  // filter
@@ -319,6 +322,7 @@ update Nginx config file </a>
         }
       }
     );
+    db.users.updateMany({},{$set: {isonline: false}})
     ```
 - Added UserRepository reference (Autowired) to AuthController
   - Update user status to online for user in users collection found by userId from refreshToken collection
@@ -401,3 +405,14 @@ update Nginx config file </a>
   );
   response.getWriter().write(new ObjectMapper().writeValueAsString(error));  
   ```
+
+## 10. Login with password and logout
+
+- Added Autowired passwordEncoder member to AuthController
+- Added endpoint /login to AuthController
+  - White list in SecurityConfig::filterChain 
+  - White list in Filter JwtValidator (not protected i.e. no accessToken required)
+- Added /logout protected endpoint
+  - White list in SecurityConfig::filterChain 
+  
+

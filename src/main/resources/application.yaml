@@ -8,10 +8,10 @@ spring:
 server:
   port: 8081
 websocket:
-  timeout-mins: 10
+  timeout-mins: 1
   check-interval-sec: 45
 useridle:
-  timeout-mins: 20
+  timeout-mins: 2
   check-interval-sec: 45
 
   
