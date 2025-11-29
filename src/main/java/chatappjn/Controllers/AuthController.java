@@ -35,7 +35,6 @@ import chatappjn.Repositories.MessageRepository;
 import chatappjn.Services.Authentication;
 import chatappjn.Services.ModelService;
 import chatappjn.Services.UserMonitor;
-import chatappjn.Auth;
 import chatappjn.Auth.AuthUser;
 import chatappjn.WebSockets.WebSocketHandler;
 
