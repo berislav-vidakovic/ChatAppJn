@@ -31,4 +31,4 @@ public class ModelService {
     @Autowired
     private ObjectMapper mapper;
 
-    }
+}

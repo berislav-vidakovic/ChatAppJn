@@ -1,0 +1,124 @@
+package chatappjn.Services;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import chatappjn.Repositories.UserRepository;
+import chatappjn.Repositories.MessageRepository;
+import chatappjn.Repositories.RefreshTokenRepository;
+import chatappjn.Repositories.ChatRepository;
+import chatappjn.Auth.AuthUser;
+import chatappjn.Config.JwtBuilder;
+import chatappjn.Models.Chat;
+import chatappjn.Models.Message;
+import chatappjn.Models.RefreshToken;
+import chatappjn.Models.User;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+
+// Spring-managed singleton 
+@Service
+public class Authentication {
+    @Autowired
+    private UserRepository userRepository;
+
+     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+
+    @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private ObjectMapper mapper;
+
+    private RefreshToken checkReceivedToken(String refreshToken) {
+      if (refreshToken == null || refreshToken.isEmpty()) 
+          return null; // Missing token
+        
+      Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByToken(refreshToken);
+      if (tokenOpt.isEmpty()) 
+          return null; // Token not found in DB
+
+      RefreshToken token = tokenOpt.get();
+      if (token.getExpiresAt().isBefore(Instant.now())) 
+          return null; // Token expired
+
+      return token; // Valid Token
+    }
+
+    public AuthUser authenticate(String userId, String password){
+      // Find user
+      Optional<User> optionalUser = userRepository.findById(userId);
+      if (optionalUser.isEmpty()) 
+        return new AuthUser("UserID Not found");
+      User user = optionalUser.get();
+
+      // Password validation 
+      // if no hashed pwd in DB => new user, first time password hashing
+      if( user.getPwd().isEmpty() ){
+        // Hash the password using BCrypt
+        String hashedPwd = passwordEncoder.encode(password);
+        user.setPwd(hashedPwd);
+        userRepository.save(user);
+      }       
+      else {
+        boolean passwordsMatch = passwordEncoder.matches(password, user.getPwd());
+        if( !passwordsMatch )
+          return new AuthUser( "Invalid password" );
+      }
+      // renew  access token
+      String accessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
+      // renew and store refresh token 
+      refreshTokenRepository.deleteByUserId(user.getId());
+      RefreshToken tokenEntity = new RefreshToken(user.getId());
+      String refreshToken = renewAndStoreRefreshToken(tokenEntity);      
+
+      return new AuthUser(accessToken, refreshToken, user);
+    }
+
+    private String renewAndStoreRefreshToken(RefreshToken tokenEntity){
+      String refreshToken = java.util.UUID.randomUUID().toString();
+      Instant expiresAt = Instant.now().plusSeconds(7 * 24 * 60 * 60); // 7 days
+      tokenEntity.setToken(refreshToken);
+      tokenEntity.setExpiresAt(expiresAt);
+      refreshTokenRepository.save(tokenEntity);
+      return refreshToken;
+    }
+
+    public AuthUser authenticate(String refreshToken){
+      RefreshToken refTokenEntity = checkReceivedToken(refreshToken);
+      if( refTokenEntity == null ) 
+        return new AuthUser("Refresh token missing, invalid or expired");
+      // valid token - get user by userId from refreshToken 
+      var userOpt = userRepository.findById(refTokenEntity.getUserId());
+      if (userOpt.isEmpty()) 
+          return new AuthUser("User not found for the provided refresh token");
+      
+      User user = userOpt.get();
+      // renew  accessToken
+      String accessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
+      // renew and store refreshToken
+      refreshToken = renewAndStoreRefreshToken(refTokenEntity);      
+      
+      return new AuthUser(accessToken, refreshToken, user);
+    }
+}

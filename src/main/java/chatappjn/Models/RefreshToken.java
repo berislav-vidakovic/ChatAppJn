@@ -30,6 +30,10 @@ public class RefreshToken {
         this.expiresAt = expiresAt;
     }
 
+    public RefreshToken(String userId) {
+        this.userId = userId;
+    }
+
     // Getters & Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
