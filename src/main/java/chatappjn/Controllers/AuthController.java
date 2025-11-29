@@ -32,6 +32,7 @@ import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.Repositories.UserRepository;
 import chatappjn.Repositories.ChatRepository;
 import chatappjn.Repositories.MessageRepository;
+import chatappjn.Services.ModelService;
 import chatappjn.Services.UserMonitor;
 import chatappjn.WebSockets.WebSocketHandler;
 
@@ -63,6 +64,9 @@ public class AuthController {
 
     @Autowired
     private WebSocketHandler webSocketHandler;
+
+    @Autowired
+    private ModelService modelService;
 
     @Autowired
     private ObjectMapper mapper;
@@ -134,13 +138,25 @@ public class AuthController {
         String newAccessToken = JwtBuilder.generateToken(
           user.getId(), user.getLogin());
 
-        // Return new tokens
-        Map<String, Object> response = Map.of(
-                "accessToken", newAccessToken,
-                "refreshToken", refreshToken,
-                "userId", userId,
-                "isOnline", true
-        );
+         // Fetch chats where user participates
+      ObjectId userObjectId = new ObjectId(userId); 
+      List<Chat> userChats = chatRepository.findByUserIdsContaining(userObjectId);
+
+      // Fetch all messages from those chats
+      List<ObjectId> chatIds = userChats.stream()
+              .map(chat -> new ObjectId(chat.getId()))
+              .toList();
+
+      List<Message> messages = messageRepository.findByChatIdInOrderByDatetimeAsc(chatIds);
+
+      Map<String, Object> response = Map.of(
+          "userId", userId,
+          "isOnline", true,
+          "accessToken", newAccessToken,           
+          "refreshToken", refreshToken,
+          "chats", userChats,
+          "messages", messages
+      );
 
         Map<String, Object> wsMessage = Map.of(
             "type", "userSessionUpdate",
@@ -248,6 +264,9 @@ public class AuthController {
       user.setOnline(true);
       userRepository.save(user);
       userMonitor.updateUserActivity(user.getId(), parsedClientId);
+
+
+
 
       // Fetch chats where user participates
       ObjectId userObjectId = new ObjectId(userId); 
