@@ -85,14 +85,8 @@ public class Authentication {
         if( !passwordsMatch )
           return new AuthUser( "Invalid password" );
       }
-      // renew  access token
-      String accessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
-      // renew and store refresh token 
-      refreshTokenRepository.deleteByUserId(user.getId());
-      RefreshToken tokenEntity = new RefreshToken(user.getId());
-      String refreshToken = renewAndStoreRefreshToken(tokenEntity);      
 
-      return new AuthUser(accessToken, refreshToken, user);
+      return buildAuthUser(user);
     }
 
     private String renewAndStoreRefreshToken(RefreshToken tokenEntity){
@@ -104,6 +98,14 @@ public class Authentication {
       return refreshToken;
     }
 
+    private AuthUser buildAuthUser(User user) {
+      String accessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
+      RefreshToken tokenEntity = new RefreshToken(user.getId());
+      String refreshToken = renewAndStoreRefreshToken(tokenEntity);
+      return new AuthUser(accessToken, refreshToken, user);
+    }
+
+
     public AuthUser authenticate(String refreshToken){
       RefreshToken refTokenEntity = checkReceivedToken(refreshToken);
       if( refTokenEntity == null ) 
@@ -113,12 +115,6 @@ public class Authentication {
       if (userOpt.isEmpty()) 
           return new AuthUser("User not found for the provided refresh token");
       
-      User user = userOpt.get();
-      // renew  accessToken
-      String accessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
-      // renew and store refreshToken
-      refreshToken = renewAndStoreRefreshToken(refTokenEntity);      
-      
-      return new AuthUser(accessToken, refreshToken, user);
+      return buildAuthUser(userOpt.get());
     }
 }

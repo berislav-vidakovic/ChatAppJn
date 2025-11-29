@@ -101,11 +101,14 @@ public class AuthController {
         if( !authUser.isOK() ) return new ResponseEntity<>(
             Map.of("error", authUser.getErrorMsg()), 
             HttpStatus.BAD_REQUEST); // 400  
+
+        // TO DO: ModelService accepts AuthUser
         
         User user = authUser.getUser();
         String userId = user.getId();
         user.setOnline(true);
         userRepository.save(user);
+        
         userMonitor.updateUserActivity(user.getId(), parsedClientId);
 
         // Fetch chats where user participates
