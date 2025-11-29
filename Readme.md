@@ -415,4 +415,53 @@ update Nginx config file </a>
 - Added /logout protected endpoint
   - White list in SecurityConfig::filterChain 
   
+## 11. MongoDB collections messages and chats
 
+- Rename field in MongoDB collection, drop collection, show collections
+  ```js
+  db.users.updateMany({}, { $rename: {"full_name":"fullName"}});
+  db.chats.drop()
+  show collections
+  db.getCollectionNames()
+  ```
+
+- Create chats collection initially populated
+  ```js
+  const sheldon = db.users.findOne({ fullName: "Sheldon" })._id;
+  const leonard = db.users.findOne({ fullName: "Leonard" })._id;
+  const rajesh  = db.users.findOne({ fullName: "Rajesh" })._id;
+  db.chats.insertMany([ { userIds: [sheldon, leonard], chatName:"Shelly,Lenny" },
+                        { userIds: [sheldon, rajesh], chatName:"Shelly,Raj" },
+                        { userIds: [leonard, rajesh], chatName:"Lenny,Raj" } ]);
+  ```
+
+- Find chat by pattern (ending ID) and add name field
+  ```js
+  const chat118id = db.chats.findOne({ $expr: { $regexMatch: {
+    input: { $toString: "$_id" },
+    regex: "123$"      
+  } } })._id;
+  db.chats.updateOne({_id:chat117id},{$set:{chatName:"Shelly,Lenny"}});
+  ```
+
+- Remove field from document
+  ```js
+  db.chats.updateOne({_id:chat117id},{$unset:{chatname:""}});
+  db.chats.updateOne({_id:chat117id},{$unset:{chatname:1}});
+  ```
+
+- Populate message collection
+  ```js
+  db.messages.insertMany([
+    {"chatId":chat117id,"userId":user113id,"datetime": ISODate("2025-11-29T10:00:00Z"),"text":"Hi there 1"},
+    {"chatId":chat117id,"userId":user114id,"datetime": ISODate("2025-11-29T10:05:00Z"),"text":"Hi there 1 reply"},{"chatId":chat118id,"userId":user113id,"datetime": ISODate("2025-11-29T10:10:00Z"),"text":"Hi there 2"},
+    {"chatId":chat118id,"userId":user115id,"datetime": ISODate("2025-11-29T10:15:00Z"),"text":"Hi there 2 reply"}]);
+  ```
+
+- Remove document in which there is no chatId field
+  ```js
+  db.messages.deleteMany({
+    chatId: { $exists: false }
+  });
+
+  ```

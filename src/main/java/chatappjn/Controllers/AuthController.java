@@ -3,10 +3,13 @@ package chatappjn.Controllers;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import java.util.Optional;
+
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +24,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import chatappjn.Config.JwtBuilder;
+import chatappjn.Models.Chat;
+import chatappjn.Models.Message;
 import chatappjn.Models.RefreshToken;
 import chatappjn.Models.User;
 import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.Repositories.UserRepository;
+import chatappjn.Repositories.ChatRepository;
+import chatappjn.Repositories.MessageRepository;
 import chatappjn.Services.UserMonitor;
 import chatappjn.WebSockets.WebSocketHandler;
 
@@ -46,6 +53,13 @@ public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ChatRepository  chatRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
+
 
     @Autowired
     private WebSocketHandler webSocketHandler;
@@ -235,11 +249,24 @@ public class AuthController {
       userRepository.save(user);
       userMonitor.updateUserActivity(user.getId(), parsedClientId);
 
+      // Fetch chats where user participates
+      ObjectId userObjectId = new ObjectId(userId); 
+      List<Chat> userChats = chatRepository.findByUserIdsContaining(userObjectId);
+
+      // Fetch all messages from those chats
+      List<ObjectId> chatIds = userChats.stream()
+              .map(chat -> new ObjectId(chat.getId()))
+              .toList();
+
+      List<Message> messages = messageRepository.findByChatIdInOrderByDatetimeAsc(chatIds);
+
       Map<String, Object> response = Map.of(
           "userId", userId,
           "isOnline", true,
           "accessToken", accessToken,           
-          "refreshToken", refreshToken
+          "refreshToken", refreshToken,
+          "chats", userChats,
+          "messages", messages
       );
 
       // var response = new { userId, isOnline = true };

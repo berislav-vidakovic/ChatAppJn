@@ -18,7 +18,7 @@ public class User {
     @Field("password")
     private String password;
 
-    @Field("full_name")
+    @Field("fullName")
     private String fullName;
 
     @Field("isonline")
