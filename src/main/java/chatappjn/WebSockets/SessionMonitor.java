@@ -41,7 +41,7 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
 
     public void addSocket(WebSocketSession session , UUID clientId ){
       sessionMap.put(session, new Client( LocalDateTime.now(), clientId) );  
-      System.out.println(" *** *** WS Connected for clientId=" + clientId+ " WS(s): " + sessionMap.size() );
+      System.out.println(" *** (addSocket) WS Connected for clientId=" + clientId+ " WS(s): " + sessionMap.size() );
       if (cleanupTask == null || cleanupTask.isCancelled() || cleanupTask.isDone()) {
         //System.out.println(" *** Starting SessionMonitor timer ................");
         startTimer("WebSocketSession");

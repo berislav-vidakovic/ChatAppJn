@@ -465,3 +465,16 @@ update Nginx config file </a>
   });
 
   ```
+
+## 12. Sending Ws message
+
+- Selecting MongoDB messages based on Date
+  ```js
+  db.messages.find( { datetime: { $gt: ISODate("2025-11-29T00:00:00Z") } }, { _id: 0, datetime: 1, text: 1 } )
+  ```
+
+- Delete messages based on Date
+  ```js
+  db.messages.deleteMany({datetime: { $gt: ISODate("2025-11-30T00:00:00Z") } })
+  ```
+
