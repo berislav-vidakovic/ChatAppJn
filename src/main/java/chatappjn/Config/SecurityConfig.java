@@ -27,6 +27,7 @@ public class SecurityConfig {
         .requestMatchers("/api/auth/refresh").permitAll()  
         .requestMatchers("/api/auth/login").permitAll()  
         .requestMatchers("/api/auth/logout").permitAll()  
+        .requestMatchers("/api/chat/new").permitAll()  
         .requestMatchers("/websocket/**").permitAll() // allow WS handshake
         .anyRequest().authenticated()     // any other request requires auth
       );

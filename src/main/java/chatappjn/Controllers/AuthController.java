@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -95,6 +96,8 @@ public class AuthController {
           return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
         }
         System.out.println("Received POST /auth/refresh with valid ID: " + parsedClientId.toString());
+
+        
         String refreshToken = body.get("refreshToken");
 
         AuthUser authUser = authService.authenticate(refreshToken);
@@ -108,7 +111,7 @@ public class AuthController {
         String userId = user.getId();
         user.setOnline(true);
         userRepository.save(user);
-        
+
         userMonitor.updateUserActivity(user.getId(), parsedClientId);
 
         // Fetch chats where user participates

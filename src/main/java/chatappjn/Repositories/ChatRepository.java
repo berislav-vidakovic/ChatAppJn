@@ -13,7 +13,7 @@ public interface ChatRepository extends MongoRepository<Chat, ObjectId> {
     // Find all chats a user participates in
     List<Chat> findByUserIdsContaining(ObjectId userId);
 
-    // Find a chat by exact combination of users (optional, custom query might be needed for exact match)
+    // Find a chat by exact combination of users
     List<Chat> findByUserIds(List<ObjectId> userIds);
 
     // Find a chat by its name

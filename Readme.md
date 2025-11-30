@@ -458,12 +458,10 @@ update Nginx config file </a>
     {"chatId":chat118id,"userId":user115id,"datetime": ISODate("2025-11-29T10:15:00Z"),"text":"Hi there 2 reply"}]);
   ```
 
-- Remove document in which there is no chatId field
+- Remove documents in which there chatId field does not exist / _class field exists
   ```js
-  db.messages.deleteMany({
-    chatId: { $exists: false }
-  });
-
+  db.messages.deleteMany({ chatId: { $exists: false } });
+  db.chats.deleteMany({ _class: { $exists: true} });
   ```
 
 ## 12. Sending Ws message

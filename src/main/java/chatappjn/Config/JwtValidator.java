@@ -32,7 +32,8 @@ public class JwtValidator extends OncePerRequestFilter {
         //path.startsWith("/api/users/register") ||
         path.startsWith("/websocket") ||
         path.startsWith("/api/auth/refresh") ||
-        path.startsWith("/api/auth/login") 
+        path.startsWith("/api/auth/login") ||
+        path.startsWith("/api/chat/new") 
       ){
           filterChain.doFilter(request, response);
           return;
