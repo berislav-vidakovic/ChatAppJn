@@ -116,6 +116,8 @@ public class Authentication {
       if (userOpt.isEmpty()) 
           return new AuthUser("User not found for the provided refresh token");
       
+      // delete existing refreshToken
+      refreshTokenRepository.delete(refTokenEntity);
       return buildAuthUser(userOpt.get());
     }
 }

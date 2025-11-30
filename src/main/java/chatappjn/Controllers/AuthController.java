@@ -96,8 +96,6 @@ public class AuthController {
           return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
         }
         System.out.println("Received POST /auth/refresh with valid ID: " + parsedClientId.toString());
-
-        
         String refreshToken = body.get("refreshToken");
 
         AuthUser authUser = authService.authenticate(refreshToken);
