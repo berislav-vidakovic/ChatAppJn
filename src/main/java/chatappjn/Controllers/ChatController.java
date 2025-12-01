@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,9 +48,17 @@ public class ChatController {
   @Autowired
   private WebSocketHandler webSocketHandler;
 
+         
+
+
   @PostMapping("/chat/new")
-  public ResponseEntity<?> createNewChat(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body) {
+  public ResponseEntity<?> createNewChat(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body,
+            @RequestAttribute("userId") String userId, @RequestAttribute("username") String username
+  ) {
     try {        
+      System.out.println("RequestAttribute(userId): " + userId);
+      System.out.println("RequestAttribute(username): " + username);
+
       // Validate clientId
       UUID parsedClientId;
       try {

@@ -1,28 +1,19 @@
 package chatappjn.Services;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import chatappjn.Repositories.UserRepository;
 import chatappjn.Repositories.MessageRepository;
 import chatappjn.Repositories.RefreshTokenRepository;
+import chatappjn.Repositories.RoleRepository;
 import chatappjn.Repositories.ChatRepository;
 import chatappjn.Auth.AuthUser;
 import chatappjn.Config.JwtBuilder;
-import chatappjn.Models.Chat;
-import chatappjn.Models.Message;
 import chatappjn.Models.RefreshToken;
 import chatappjn.Models.User;
 
@@ -38,6 +29,8 @@ public class Authentication {
      @Autowired
     private PasswordEncoder passwordEncoder;
 
+    //@Autowired  Add for RBAC
+    //private RoleRepository roleRepository;
 
     @Autowired
     private MessageRepository messageRepository;
@@ -100,12 +93,16 @@ public class Authentication {
     }
 
     private AuthUser buildAuthUser(User user) {
-      String accessToken = JwtBuilder.generateToken(user.getId(), user.getLogin());
+      //List<String> roles = user.getRoles(); Add for RBAC
+      //List<String> claims = collectClaims(user); Add for RBAC
+      String accessToken = JwtBuilder.generateToken(
+              user.getId(),
+              user.getLogin() );
+              //,roles, claims ); // Add for RBAC
       RefreshToken tokenEntity = new RefreshToken(user.getId());
       String refreshToken = renewAndStoreRefreshToken(tokenEntity);
       return new AuthUser(accessToken, refreshToken, user);
     }
-
 
     public AuthUser authenticate(String refreshToken){
       RefreshToken refTokenEntity = checkReceivedToken(refreshToken);
@@ -120,4 +117,17 @@ public class Authentication {
       refreshTokenRepository.delete(refTokenEntity);
       return buildAuthUser(userOpt.get());
     }
+    /* Add for RBAC
+    private List<String> collectClaims(User user) {
+      // No roles → no claims
+      if (user.getRoles() == null || user.getRoles().isEmpty())
+        return List.of();
+      // Fetch role documents from DB
+      var roleDocs = roleRepository.findByRoleIn(user.getRoles());
+      // Merge claims from all role documents
+      return roleDocs.stream()
+        .flatMap(r -> r.getClaims().stream())
+        .distinct()
+        .toList();
+    } */
 }

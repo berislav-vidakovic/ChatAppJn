@@ -458,10 +458,11 @@ update Nginx config file </a>
     {"chatId":chat118id,"userId":user115id,"datetime": ISODate("2025-11-29T10:15:00Z"),"text":"Hi there 2 reply"}]);
   ```
 
-- Remove documents in which there chatId field does not exist / _class field exists
+- Remove documents in which there chatId field does not exist / _class field exists / based by field value
   ```js
   db.messages.deleteMany({ chatId: { $exists: false } });
   db.chats.deleteMany({ _class: { $exists: true} });
+  db.chats.deleteMany({ chatName: { $nin: ['Sheldon,Howard']} });
   ```
 
 ## 12. Sending Ws message
@@ -475,4 +476,154 @@ update Nginx config file </a>
   ```js
   db.messages.deleteMany({datetime: { $gt: ISODate("2025-11-30T00:00:00Z") } })
   ```
+
+## 13. Introducing Role-Based Access Control (RBAC)
+
+### Before RBAC:
+
+- User logs in → backend returns accessToken + refreshToken
+- Frontend uses accessToken for protected API calls
+- Backend just checks "is this token valid?"
+- Current JWT Structure - JwtBuilder contains 2 fields
+  ```java
+  public static String generateToken(String userId, String username) {
+    return Jwts.builder()
+      .setSubject(username)  // Field username
+      .claim("userId", userId)  // Field userId
+      .setIssuedAt(new Date())
+      .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
+      .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+      .compact();
+  }
+  ```
+- JwtValidator ( OncePerRequestFilter subclass ) in parsing extracted Autorization: Bearer content needs to read both fields and set them as request attributes
+  ```java
+  Claims claims = Jwts.parserBuilder()
+    .setSigningKey(JwtBuilder.getSecretKey())  
+    .build()
+    .parseClaimsJws(accessJWT)
+    .getBody();
+  // extract fields added in JwtBuilder::generateToken
+  String username = claims.getSubject();
+  String userId = claims.get("userId", String.class);
+  // Store them into request attributes (Controller gets them)
+  request.setAttribute("username", username);
+  request.setAttribute("userId", userId);
+  ```
+- Controller usage of field passed from OncePerRequestFilter subclass (in protected endpoint only)
+  ```java   
+  @PostMapping("/chat/new")
+  public ResponseEntity<?> createNewChat(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body,
+            @RequestAttribute("userId") String userId, @RequestAttribute("username") String username
+  ) {
+    try {        
+      System.out.println("RequestAttribute(userId): " + userId);
+      System.out.println("RequestAttribute(username): " + username);
+  ```
+
+### After RBAC:
+
+- Everything is the same mechanically
+  - still one accessToken + one refreshToken per session
+  - refresh token workflow is unchanged
+- Only difference: 
+  - accessToken now carries extra info (role & claims)  
+- Backend checks both:
+    - Token is valid
+    - Token’s claims allow the action
+- Building JWT 
+  - read the role & claims from DB when building the token
+  - add role and claims to the JWT payload
+
+### Roles and Claims:
+
+- Role: Admin 
+  - Claims: sendMessage, createChat, manageUsers
+- Role: Prime 
+  - Claims: sendMessage, createChat
+- Role: Basic 
+  - Claims: sendMessage
+
+
+### MongoDB collections
+
+- Create new collection
+  ```js
+  db.roles.insertMany( [
+    { "role": "Admin", "claims": ["createChat", "sendMessage", "manageUsers"] },
+    { "role": "Prime", "claims": ["createChat", "sendMessage"] },
+    { "role": "Basic", "claims": ["sendMessage"] } ] )
+  ```
+
+- Extend users document with roles field
+  ```js
+  db.users.updateMany({login:'shelly'},{$set: {role: 'Admin'}})
+  db.users.updateMany({login:'lenny'},{$set: {role: 'Prime'}})
+  db.users.updateMany({login:'raj'},{$set: {role: 'Basic'}})
+  db.users.updateMany({login:'howie'},{$set: {role: 'Basic'}})
+  ```
+
+- MongoDB commands
+  1. Add roles field as array value
+  2. Append new single role
+  3. Append new single role if it does not exist (prevent duplicates)
+  4. Append many roles (with preventing duplicates)
+  5. Remove role from roles array
+  6. Remove many array elements
+  7. Delete old role field
+      ```js
+      1. db.users.updateOne({login: 'howie'},{ $set: {roles:['Basic']}})
+      2. db.users.updateOne({login: 'howie'},{ $push: {roles: 'Prime'}})
+      3. db.users.updateOne({login: 'howie'},{ $addToSet: {roles: 'Admin'}})
+      4. db.users.updateOne({login: 'howie'},
+        { $addToSet: {roles: { $each: ['Prime','Admin1']}}})
+      5. db.users.updateOne({login: 'howie'},{ $pull: {roles: 'Admin1'}})
+      6. db.users.updateOne({login: 'howie'},{ $pull: {roles: { $in: ['Prime','Admin']}} })
+      7. db.users.updateOne({login: 'howie'},{ $unset: {role:''}})
+      ```
+
+### Update User model with roles array field
+
+  ```java
+  @Field("roles")
+  private List<String> roles;     
+  ```
+
+### Java implementation 
+
+- Create Role model and Repository
+- Inject RoleRepository into Authentication service (@Autowired)
+- Add method Authentication::collectClaims for collecting claims by provided user object
+- Add Roles and Claims  to the JWT Builder
+  ```java
+  public static String generateToken(String userId, String username,
+      List<String> roles, List<String> claims) { // Added 2 new parameters
+
+      return Jwts.builder()
+        .setSubject(username)
+        .claim("userId", userId)
+        .claim("roles", roles) // Added
+        .claim("claims", claims) // Added
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
+        .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+        .compact();
+  }
+  ```
+- Update Authentication::buildAuthUser() to pass roles and claims into JWT
+    ```java
+    List<String> roles = user.getRoles();
+    List<String> claims = collectClaims(user);
+
+    String accessToken = JwtBuilder.generateToken(
+            user.getId(),
+            user.getLogin(),
+            roles,
+            claims
+    );
+    ```
+- Update OncePerRequestFilter subclass (JwtValidator)
+
+
+
 

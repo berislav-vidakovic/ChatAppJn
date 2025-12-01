@@ -24,10 +24,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import chatappjn.Config.JwtBuilder;
 import chatappjn.Models.Chat;
 import chatappjn.Models.Message;
-import chatappjn.Models.RefreshToken;
 import chatappjn.Models.User;
 import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.Repositories.UserRepository;

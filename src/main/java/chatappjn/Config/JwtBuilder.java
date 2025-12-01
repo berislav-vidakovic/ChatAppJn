@@ -5,6 +5,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 public class JwtBuilder {
   private static final Key SECRET_KEY = Keys.hmacShaKeyFor("KeyForJWTauthenticationInChatApp".getBytes());
@@ -15,12 +16,15 @@ public class JwtBuilder {
   }
 
   public static String generateToken(String userId, String username) {
+    //,List<String> roles, List<String> claims) { // Add for RBAC 
     return Jwts.builder()
-            .setSubject(username)
-            .claim("userId", userId)
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
-            .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
-            .compact();
+      .setSubject(username)
+      .claim("userId", userId)
+      //.claim("roles", roles) // Add for RBAC
+      //.claim("claims", claims) // Add for RBAC
+      .setIssuedAt(new Date())
+      .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
+      .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+      .compact();
   }
 }

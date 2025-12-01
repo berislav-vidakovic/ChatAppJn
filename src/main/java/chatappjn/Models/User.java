@@ -1,5 +1,7 @@
 package chatappjn.Models;
 
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -24,16 +26,28 @@ public class User {
     @Field("isonline")
     private boolean isOnline = false; // default false
 
+    @Field("roles")
+    private List<String> roles; 
+
     // Constructors
     public User() {}
 
-    public User(String login, String fullName, boolean isOnline) {
+    public User(String login, String fullName, boolean isOnline, List<String> roles) {
         this.login = login;
         this.fullName = fullName;
         this.isOnline = isOnline;
+        this.roles = roles;
     }
 
     // Getters and Setters
+    public List<String> getRoles() {
+      return roles;                  
+    }
+
+    public void setRoles(List<String> roles) {
+      this.roles = roles;            
+    }
+
     public String getId() {
         return id;
     }

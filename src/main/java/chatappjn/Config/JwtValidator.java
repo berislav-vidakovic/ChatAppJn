@@ -32,8 +32,7 @@ public class JwtValidator extends OncePerRequestFilter {
         //path.startsWith("/api/users/register") ||
         path.startsWith("/websocket") ||
         path.startsWith("/api/auth/refresh") ||
-        path.startsWith("/api/auth/login") ||
-        path.startsWith("/api/chat/new") 
+        path.startsWith("/api/auth/login") 
       ){
           filterChain.doFilter(request, response);
           return;
@@ -47,7 +46,12 @@ public class JwtValidator extends OncePerRequestFilter {
           .parseClaimsJws(accessJWT)
           .getBody();
 
-        request.setAttribute("userId", claims.getSubject());
+        // extract fields added in JwtBuilder::generateToken
+        String username = claims.getSubject();
+        String userId = claims.get("userId", String.class);
+        // Store them into request attributes
+        request.setAttribute("username", username);
+        request.setAttribute("userId", userId);
       } 
       catch (Exception e) {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
