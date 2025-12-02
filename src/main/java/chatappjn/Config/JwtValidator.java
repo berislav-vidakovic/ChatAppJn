@@ -12,6 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -49,9 +50,13 @@ public class JwtValidator extends OncePerRequestFilter {
         // extract fields added in JwtBuilder::generateToken
         String username = claims.getSubject();
         String userId = claims.get("userId", String.class);
+        List<String> roles = claims.get("roles", List.class);
+        List<String> userClaims = claims.get("claims", List.class);
         // Store them into request attributes
         request.setAttribute("username", username);
         request.setAttribute("userId", userId);
+        request.setAttribute("roles", roles);
+        request.setAttribute("claims", userClaims);
       } 
       catch (Exception e) {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

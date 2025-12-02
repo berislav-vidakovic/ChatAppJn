@@ -29,8 +29,8 @@ public class Authentication {
      @Autowired
     private PasswordEncoder passwordEncoder;
 
-    //@Autowired  Add for RBAC
-    //private RoleRepository roleRepository;
+    @Autowired  // Add for RBAC
+    private RoleRepository roleRepository;
 
     @Autowired
     private MessageRepository messageRepository;
@@ -93,12 +93,12 @@ public class Authentication {
     }
 
     private AuthUser buildAuthUser(User user) {
-      //List<String> roles = user.getRoles(); Add for RBAC
-      //List<String> claims = collectClaims(user); Add for RBAC
+      List<String> roles = user.getRoles(); // Add for RBAC
+      List<String> claims = collectClaims(user); // Add for RBAC
       String accessToken = JwtBuilder.generateToken(
               user.getId(),
-              user.getLogin() );
-              //,roles, claims ); // Add for RBAC
+              user.getLogin(),
+              roles, claims ); // Add for RBAC
       RefreshToken tokenEntity = new RefreshToken(user.getId());
       String refreshToken = renewAndStoreRefreshToken(tokenEntity);
       return new AuthUser(accessToken, refreshToken, user);
@@ -117,7 +117,8 @@ public class Authentication {
       refreshTokenRepository.delete(refTokenEntity);
       return buildAuthUser(userOpt.get());
     }
-    /* Add for RBAC
+    
+    //Add for RBAC
     private List<String> collectClaims(User user) {
       // No roles → no claims
       if (user.getRoles() == null || user.getRoles().isEmpty())
@@ -129,5 +130,5 @@ public class Authentication {
         .flatMap(r -> r.getClaims().stream())
         .distinct()
         .toList();
-    } */
+    } 
 }

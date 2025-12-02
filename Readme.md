@@ -592,29 +592,42 @@ update Nginx config file </a>
 ### Java implementation 
 
 - Create Role model and Repository
-- Inject RoleRepository into Authentication service (@Autowired)
-- Add method Authentication::collectClaims for collecting claims by provided user object
-- Add Roles and Claims  to the JWT Builder
+- **JwtBuilder** - Add Roles and Claims as parameters - called by Authentication service in buildAuthUser()
   ```java
   public static String generateToken(String userId, String username,
-      List<String> roles, List<String> claims) { // Added 2 new parameters
-
-      return Jwts.builder()
-        .setSubject(username)
-        .claim("userId", userId)
-        .claim("roles", roles) // Added
-        .claim("claims", claims) // Added
-        .setIssuedAt(new Date())
-        .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
-        .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
-        .compact();
+    List<String> roles, List<String> claims) { // Added 2 new parameters
+    return Jwts.builder()
+      .setSubject(username)
+      .claim("userId", userId)
+      .claim("roles", roles) // Added
+      .claim("claims", claims) // Added
+      .setIssuedAt(new Date())
+      .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
+      .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+      .compact();
   }
   ```
-- Update Authentication::buildAuthUser() to pass roles and claims into JWT
+- **Authentication service**
+  - Inject RoleRepository (@Autowired)
+  - Add method Authentication::collectClaims for collecting claims by provided user object
+    ```java
+    private List<String> collectClaims(User user) {
+      // No roles → no claims
+      if (user.getRoles() == null || user.getRoles().isEmpty())
+        return List.of();
+      // Fetch role documents from DB
+      var roleDocs = roleRepository.findByRoleIn(user.getRoles());
+      // Merge claims from all role documents
+      return roleDocs.stream()
+        .flatMap(r -> r.getClaims().stream())
+        .distinct()
+        .toList();
+    } 
+    ```
+  - Update buildAuthUser() to pass roles and claims as arguments to JwtBuilder
     ```java
     List<String> roles = user.getRoles();
     List<String> claims = collectClaims(user);
-
     String accessToken = JwtBuilder.generateToken(
             user.getId(),
             user.getLogin(),
@@ -622,8 +635,26 @@ update Nginx config file </a>
             claims
     );
     ```
-- Update OncePerRequestFilter subclass (JwtValidator)
 
+- **JwtValidator** -  Update OncePerRequestFilter subclass with roles and claims extract and set
+  ```java
+  // extract fields added in JwtBuilder::generateToken
+  List<String> roles = claims.get("roles", List.class);
+  List<String> userClaims = claims.get("claims", List.class);
+  // Store them into request attributes
+  request.setAttribute("roles", roles);
+  request.setAttribute("claims", userClaims);
+  ```
 
+- **Controller** - Check in protected endpoint for required claim
+  ```java
+  @PostMapping("/chat/new")
+  public ResponseEntity<?> createChat(
+        @RequestAttribute("claims") List<String> claims) {
+
+    if (!claims.contains("createChat")) {
+        return ResponseEntity.status(403).body("Forbidden");
+    }
+  ```
 
 

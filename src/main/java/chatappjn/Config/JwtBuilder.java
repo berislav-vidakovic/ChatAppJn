@@ -15,13 +15,13 @@ public class JwtBuilder {
       return SECRET_KEY;
   }
 
-  public static String generateToken(String userId, String username) {
-    //,List<String> roles, List<String> claims) { // Add for RBAC 
+  public static String generateToken(String userId, String username,
+      List<String> roles, List<String> claims) { // Add for RBAC 
     return Jwts.builder()
       .setSubject(username)
       .claim("userId", userId)
-      //.claim("roles", roles) // Add for RBAC
-      //.claim("claims", claims) // Add for RBAC
+      .claim("roles", roles) // Add for RBAC
+      .claim("claims", claims) // Add for RBAC
       .setIssuedAt(new Date())
       .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME_MS))
       .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
