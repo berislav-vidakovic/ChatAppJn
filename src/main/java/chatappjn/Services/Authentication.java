@@ -12,7 +12,7 @@ import chatappjn.Repositories.MessageRepository;
 import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.Repositories.RoleRepository;
 import chatappjn.Repositories.ChatRepository;
-import chatappjn.Auth.AuthUser;
+import chatappjn.Common.AuthUser;
 import chatappjn.Config.JwtBuilder;
 import chatappjn.Models.RefreshToken;
 import chatappjn.Models.User;

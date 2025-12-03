@@ -25,6 +25,9 @@
 8. [Register new User and hashing password](#8-register-new-user-and-hashing-password)
 9. [JWT Authentication incremental build](#9-jwt-authentication-incremental-build)
 10. [Login with password and logout](#10-login-with-password-and-logout)
+11. [MongoDB collections messages and chats](#11-mongodb-collections-messages-and-chats)
+12. [Sending Ws message](#12-sending-ws-message)
+13. [Introducing Role-Based Access Control (RBAC)](#13-introducing-role-based-access-control-rbac)
 
    
 

@@ -9,13 +9,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import chatappjn.Common.UserDTO;
+import chatappjn.Models.Role;
 import chatappjn.Models.User;
+import chatappjn.Repositories.RoleRepository;
 import chatappjn.Repositories.UserRepository;
 import chatappjn.WebSockets.WebSocketHandler;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,6 +37,9 @@ public class UsersController {
   private UserRepository userRepository;
 
   @Autowired
+  private RoleRepository roleRepository;
+
+  @Autowired
   private PasswordEncoder passwordEncoder;
 
   @Autowired
@@ -39,11 +47,6 @@ public class UsersController {
 
   @Autowired
   private WebSocketHandler webSocketHandler;
-
-
-  public UsersController(UserRepository userRepository) {
-      this.userRepository = userRepository;
-  }
 
   @GetMapping("/all")
   public ResponseEntity<Map<String, Object>> getUsers() {
@@ -62,10 +65,27 @@ public class UsersController {
         baseUrl + "/images/mysql.png"
     );
 
+    List<UserDTO> usersDTO = new ArrayList<>();
+    for( User user : users ){
+      List<String> roles = user.getRoles();
+      HashSet<String> claims = new HashSet<>();
+      for( String strRole : roles){
+        Role role = roleRepository.findByRole(strRole);
+        List<String> roleClaims = role.getClaims();
+        for (String roleClaim : roleClaims ) {
+          claims.add(roleClaim);
+        }
+      }
+      usersDTO.add(new UserDTO(user, claims));
+    }
+    // All available roles with claims
+    List<Role> roles = roleRepository.findAll();
+
     Map<String, Object> response = Map.of(
         "id", clientId.toString(),
-        "users", users,
-        "techstack", techstack
+        "users", usersDTO,
+        "techstack", techstack,
+        "roles", roles        
     );
 
     return new ResponseEntity<>(response, HttpStatus.OK); // 200

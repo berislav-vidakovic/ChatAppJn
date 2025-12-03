@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import chatappjn.Common.AuthUser;
 import chatappjn.Models.Chat;
 import chatappjn.Models.Message;
 import chatappjn.Models.User;
@@ -34,7 +35,6 @@ import chatappjn.Repositories.MessageRepository;
 import chatappjn.Services.Authentication;
 import chatappjn.Services.ModelService;
 import chatappjn.Services.UserMonitor;
-import chatappjn.Auth.AuthUser;
 import chatappjn.WebSockets.WebSocketHandler;
 
 // POST /api/auth/refresh

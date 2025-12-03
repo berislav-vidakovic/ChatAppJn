@@ -1,4 +1,4 @@
-package chatappjn.Auth;
+package chatappjn.Common;
 
 import chatappjn.Models.User;
 
