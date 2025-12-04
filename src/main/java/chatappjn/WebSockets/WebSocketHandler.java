@@ -81,6 +81,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         session.close(CloseStatus.BAD_DATA); // immediately close
         return; // abort further processing
       }      */
+
+       // TO DO:Incoming message to update User activity
       
       
       sessionMonitor.updateSessionActivity(session);

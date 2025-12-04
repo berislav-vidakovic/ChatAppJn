@@ -1,8 +1,5 @@
 package chatappjn.Controllers;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -11,7 +8,6 @@ import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +31,7 @@ import chatappjn.Repositories.MessageRepository;
 import chatappjn.Services.Authentication;
 import chatappjn.Services.ModelService;
 import chatappjn.Services.UserMonitor;
-import chatappjn.WebSockets.WebSocketHandler;
+import chatappjn.Services.WebSocketService;
 
 // POST /api/auth/refresh
 // POST /api/auth/login
@@ -62,9 +58,8 @@ public class AuthController {
     @Autowired
     private MessageRepository messageRepository;
 
-
     @Autowired
-    private WebSocketHandler webSocketHandler;
+    private WebSocketService webSocketService;
 
     @Autowired
     private ModelService modelService;
@@ -130,15 +125,8 @@ public class AuthController {
             "messages", messages
         );
 
-        Map<String, Object> wsMessage = Map.of(
-            "type", "userSessionUpdate",
-            "status", "WsStatus.OK",
-            "data", response
-        );
-        // Convert Map to JSON string
-        String wsJson = mapper.writeValueAsString(wsMessage);
-        // Broadcast via WebSocket
-        webSocketHandler.broadcast(wsJson);
+        webSocketService.broadcastMessage("userSessionUpdate",
+           "WsStatus.OK", response);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
       } 
@@ -220,16 +208,8 @@ public class AuthController {
             "messages", messages
         );
 
-        // var response = new { userId, isOnline = true };
-        Map<String, Object> wsMessage = Map.of(
-            "type", "userSessionUpdate",
-            "status", "WsStatus.OK",
-            "data", response
-        );
-        // Convert Map to JSON string
-        String wsJson = mapper.writeValueAsString(wsMessage);
-        // Broadcast via WebSocket
-        webSocketHandler.broadcast(wsJson);
+        webSocketService.broadcastMessage("userSessionUpdate",
+        "WsStatus.OK", response);
 
         return new ResponseEntity<>(response, HttpStatus.OK); // 200
       } 
@@ -294,15 +274,8 @@ public class AuthController {
         "isOnline", false
       );
 
-      Map<String, Object> wsMessage = Map.of(
-        "type", "userSessionUpdate",
-        "status", "WsStatus.OK",
-        "data", response
-      );
-      // Convert Map to JSON string
-      String wsJson = mapper.writeValueAsString(wsMessage);
-      // Broadcast via WebSocket
-      webSocketHandler.broadcast(wsJson);
+      webSocketService.broadcastMessage("userSessionUpdate",
+        "WsStatus.OK", response);
 
       return new ResponseEntity<>(response, HttpStatus.OK); // 200
     } 

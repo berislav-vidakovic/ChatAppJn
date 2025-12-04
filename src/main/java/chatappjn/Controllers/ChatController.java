@@ -3,7 +3,6 @@ package chatappjn.Controllers;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,22 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 import chatappjn.Models.Chat;
 import chatappjn.Models.User;
 import chatappjn.Repositories.UserRepository;
+import chatappjn.Services.WebSocketService;
 import chatappjn.Repositories.ChatRepository;
-import chatappjn.WebSockets.WebSocketHandler;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-// GET /api/users/all
-// POST /api/users/register
+// POST /api/chat/new
 @RestController
 @RequestMapping("/api")
 public class ChatController {
@@ -46,15 +42,12 @@ public class ChatController {
   private ObjectMapper mapper;
 
   @Autowired
-  private WebSocketHandler webSocketHandler;
-
-         
+  private WebSocketService  webSocketService;
 
 
   @PostMapping("/chat/new")
   public ResponseEntity<?> createNewChat(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body,
-            @RequestAttribute("userId") String userId, @RequestAttribute("username") String username
-  ) {
+            @RequestAttribute("userId") String userId, @RequestAttribute("username") String username ) {
     try {        
       System.out.println("RequestAttribute(userId): " + userId);
       System.out.println("RequestAttribute(username): " + username);
@@ -136,36 +129,18 @@ public class ChatController {
       "userIds", allUserIds
     );
     
-    // WebSocket broadcast
-    Map<String, Object> wsMessage = Map.of(
-      "type", "newChatCreated",
-      "status", "WsStatus.OK",
-      "data", response
-    );
-    String wsJson = mapper.writeValueAsString(wsMessage);
-    webSocketHandler.broadcast(wsJson);
+    webSocketService.broadcastMessage("newChatCreated", "WsStatus.OK", response);
 
     return new ResponseEntity<>(response, HttpStatus.CREATED); // 201
   } 
-  catch (Exception e) {
-      e.printStackTrace();
-      Map<String, Object> errorResponse = Map.of( 
-        "acknowledged", false, "error", e.getMessage());
-      return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR); // 500   
+    catch (Exception e) {
+        e.printStackTrace();
+        Map<String, Object> errorResponse = Map.of( 
+          "acknowledged", false, "error", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR); // 500   
+    }
   }
-}
 
 }
 
 
-/*
-  If your goal is just to stop Spring from writing _class in Mongo documents, you can configure it via application properties:
-
-spring.data.mongodb.auto-index-creation=true
-spring.data.mongodb.mapping.type-key=
-
-
-Setting spring.data.mongodb.mapping.type-key to empty disables _class field.
-
-No custom MongoConfig required, which avoids the circular dependency.
-  */

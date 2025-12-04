@@ -56,6 +56,18 @@ public class UserMonitor extends IdleMonitor<String> {
       return EMPTY_USERID;
     }
 
+    // called from SessionMonitor::updateSessionActivity
+    public void updateUserActivity(Client client) {
+      for (Map.Entry<String, Client> entry : userActivityMap.entrySet()) {
+        UUID clientId = entry.getValue().getClientId();
+        if( client.getClientId().equals(clientId)){
+          updateUserActivity(entry.getKey(), clientId );
+          System.out.println("UPDATED user activity");
+          break;
+        }
+      }
+    }
+
     // called from controllers 1) /api/login and 2) /auth/refresh
     public void updateUserActivity(String userId, UUID clientId) {
       // add or update userId in map  

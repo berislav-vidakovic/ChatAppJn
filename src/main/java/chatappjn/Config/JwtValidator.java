@@ -30,7 +30,7 @@ public class JwtValidator extends OncePerRequestFilter {
     if( path.startsWith("/api/ping") ||
         path.startsWith("/api/pingdb") ||
         path.startsWith("/api/users/all") ||
-        //path.startsWith("/api/users/register") ||
+        path.startsWith("/api/users/register") ||
         path.startsWith("/websocket") ||
         path.startsWith("/api/auth/refresh") ||
         path.startsWith("/api/auth/login") 

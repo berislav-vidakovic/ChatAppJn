@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import chatappjn.Common.UserDTO;
+import chatappjn.Models.RefreshToken;
 import chatappjn.Models.Role;
 import chatappjn.Models.User;
 import chatappjn.Repositories.RoleRepository;
 import chatappjn.Repositories.UserRepository;
-import chatappjn.WebSockets.WebSocketHandler;
+import chatappjn.Services.Authentication;
+import chatappjn.Services.WebSocketService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -30,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 // GET /api/users/all
 // POST /api/users/register
+// POST /api/users/roles
 @RestController
 @RequestMapping("/api/users")
 public class UsersController {
@@ -46,7 +50,7 @@ public class UsersController {
   private ObjectMapper mapper;
 
   @Autowired
-  private WebSocketHandler webSocketHandler;
+  private WebSocketService webSocketService;
 
   @GetMapping("/all")
   public ResponseEntity<Map<String, Object>> getUsers() {
@@ -123,8 +127,8 @@ public class UsersController {
       User newUser = new User();
       newUser.setLogin(login);
       newUser.setFullName(fullName);
-      //newUser.setPwd(password);
       newUser.setPwd(hashedPwd);
+      newUser.setRoles(List.of("Basic"));
       userRepository.save(newUser);
       System.out.printf("New user inserted: %s%n", login);
 
@@ -132,20 +136,59 @@ public class UsersController {
               "acknowledged", true,
               "user", newUser
       );
-
-      // Build WS message as Map
-      Map<String, Object> wsMessage = Map.of(
-          "type", "userRegister",
-          "status", "WsStatus.OK",
-          "data", response
-      );
-      // Convert Map to JSON string
-      String wsJson = mapper.writeValueAsString(wsMessage);
-
-      // Broadcast via WebSocket
-      webSocketHandler.broadcast(wsJson);
+      
+      webSocketService.broadcastMessage("userRegister", "WsStatus.OK", response);
 
       return new ResponseEntity<>(response, HttpStatus.CREATED); // 201
+    } 
+    catch (Exception e) {
+        e.printStackTrace();
+        Map<String, Object> errorResponse = Map.of( 
+          "acknowledged", false, "error", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR); // 500   
+    }
+  }
+
+  @PostMapping("/roles")
+  public ResponseEntity<?> updateUserRoles(@RequestBody Map<String, Object> body) {
+    try {
+      // Expecting: { userId, userRoles }
+      String userId = (String)body.get("userId");
+      List<String> userRoles = (List<String>) body.get("userRoles"); // cast to List
+
+      if (userId == null || userId.isBlank() ) {
+        Map<String, Object> response = Map.of(
+                  "acknowledged", false,
+                  "error", "Missing userId "
+          );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
+      }
+      System.out.printf("User Roles request: userId=%s, roles=%s", userId, userRoles);
+
+   
+      Optional<User> userOpt = userRepository.findById(userId);
+      if (userOpt.isEmpty()) {
+        Map<String, Object> response = Map.of(
+                "acknowledged", false,
+                "error", "User  not found "
+        );
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND); // 404
+      }
+      User user = userOpt.get();
+      user.setRoles(userRoles);
+      userRepository.save(user);
+
+      System.out.printf("User roles updates: %s%n", userId);
+
+      Map<String, Object> response = Map.of(
+              "acknowledged", true,
+              "userId", userId,
+              "userRoles", userRoles
+      );
+
+      webSocketService.broadcastMessage("userRoles", "WsStatus.OK", response);
+
+      return new ResponseEntity<>(response, HttpStatus.OK); // 200
     } 
     catch (Exception e) {
         e.printStackTrace();
