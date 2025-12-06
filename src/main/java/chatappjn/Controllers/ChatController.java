@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import chatappjn.Models.Chat;
 import chatappjn.Models.User;
 import chatappjn.Repositories.UserRepository;
+import chatappjn.Services.ClientIdChecker;
 import chatappjn.Services.WebSocketService;
 import chatappjn.Repositories.ChatRepository;
 
@@ -43,7 +44,9 @@ public class ChatController {
 
   @Autowired
   private WebSocketService  webSocketService;
-
+  
+  @Autowired
+  private ClientIdChecker clientIdChecker;
 
   @PostMapping("/chat/new")
   public ResponseEntity<?> createNewChat(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body,
@@ -52,20 +55,10 @@ public class ChatController {
       System.out.println("RequestAttribute(userId): " + userId);
       System.out.println("RequestAttribute(username): " + username);
 
-      // Validate clientId
-      UUID parsedClientId;
-      try {
-        parsedClientId = UUID.fromString(clientId);
-      } 
-      catch (IllegalArgumentException e) {
-        Map<String, Object> response = Map.of(
-                "acknowledged", false,
-                "error", "Missing or invalid ID"
-          );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-      }
-      System.out.println("Received POST /chat/new with valid ID: " + parsedClientId.toString());
-    
+      UUID parsedClientId = clientIdChecker.parseClientId(clientId);
+      if( parsedClientId == null )
+        return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
+
       // Request:  { creatorId,  memberIds: [userId1,userId2] }
       String creatorId = (String)body.get("creatorId");
       List<String> memberIds = (List<String>) body.get("memberIds"); // cast to List

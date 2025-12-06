@@ -23,9 +23,9 @@ public class WebSocketService {
       try{
         // Build WS message as Map 
         Map<String, Object> wsMessage = Map.of(
-            "type", type,
-            "status", status,
-            "data", content
+          "type", type,
+          "status", status,
+          "data", content
         );
         // Convert Map to JSON string
         String wsJson = mapper.writeValueAsString(wsMessage);

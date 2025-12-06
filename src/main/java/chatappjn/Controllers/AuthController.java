@@ -29,6 +29,7 @@ import chatappjn.Repositories.UserRepository;
 import chatappjn.Repositories.ChatRepository;
 import chatappjn.Repositories.MessageRepository;
 import chatappjn.Services.Authentication;
+import chatappjn.Services.ClientIdChecker;
 import chatappjn.Services.ModelService;
 import chatappjn.Services.UserMonitor;
 import chatappjn.Services.WebSocketService;
@@ -70,29 +71,23 @@ public class AuthController {
     @Autowired
     private Authentication authService;
 
+    @Autowired
+    private ClientIdChecker clientIdChecker;
+
     public AuthController() {
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestParam("id") String clientId, @RequestBody Map<String, String> body) {
       try {        
-        // Validate clientId
-        UUID parsedClientId;
-        try {
-          parsedClientId = UUID.fromString(clientId);
-        } 
-        catch (IllegalArgumentException e) {
-          Map<String, Object> response = Map.of(
-                  "acknowledged", false,
-                  "error", "Missing or invalid ID"
-            );
-          return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-        }
-        System.out.println("Received POST /auth/refresh with valid ID: " + parsedClientId.toString());
-        String refreshToken = body.get("refreshToken");
+        UUID parsedClientId = clientIdChecker.parseClientId(clientId);
+        if( parsedClientId == null )
+          return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
 
+        String refreshToken = body.get("refreshToken");
         AuthUser authUser = authService.authenticate(refreshToken);
-        if( !authUser.isOK() ) return new ResponseEntity<>(
+        if( !authUser.isOK() ) 
+          return new ResponseEntity<>(
             Map.of("error", authUser.getErrorMsg()), 
             HttpStatus.BAD_REQUEST); // 400  
 
@@ -141,19 +136,9 @@ public class AuthController {
     public ResponseEntity<?> login( @RequestParam("id") String clientId, 
       @RequestBody Map<String, Object> body) {
       try {
-        // Validate clientId
-        UUID parsedClientId;
-        try {
-          parsedClientId = UUID.fromString(clientId);
-        } 
-        catch (IllegalArgumentException e) {
-          Map<String, Object> response = Map.of(
-                  "acknowledged", false,
-                  "error", "Missing or invalid ID"
-            );
-          return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-        }
-        System.out.println("Received POST /api/auth/login with valid ID: " + parsedClientId.toString());
+        UUID parsedClientId = clientIdChecker.parseClientId(clientId);
+        if( parsedClientId == null )
+          return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
 
         // Validate userId
         if (!body.containsKey("userId")) {
@@ -225,19 +210,9 @@ public class AuthController {
   @PostMapping("/logout")
   public ResponseEntity<?> logout(@RequestParam("id") String clientId, @RequestBody Map<String, Object> body) {
     try {
-      // Validate clientId
-      System.out.println("Received POST /api/auth/logout ");
-      UUID parsedClientId;
-      try {
-        parsedClientId = UUID.fromString(clientId);
-      } catch (IllegalArgumentException e) {
-        Map<String, Object> response = Map.of(
-          "acknowledged", false,
-          "error", "Missing or invalid ID"
-        );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-      }
-      System.out.println("Received POST /api/auth/logout with valid ID: " + parsedClientId.toString());
+      UUID parsedClientId = clientIdChecker.parseClientId(clientId);
+      if( parsedClientId == null )
+        return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
 
       // Validate userId
       if (!body.containsKey("userId")) {
