@@ -2,12 +2,15 @@ package chatappjn.Common;
 
 public class Credentials extends Atom{
   private String userId;
-  private String password;
 
-  public Credentials( String userId, String password ){
+  public Credentials( String userId, boolean isPasswordPresent ){
     super();
-    this.userId = userId;
-    this.password = password;    
+    if( isPasswordPresent )
+      this.userId = userId;
+    else {
+      this.isOK = false;
+      this.errorMessage = "Missing password";
+    }
   }
 
   public Credentials( String err ){
@@ -18,8 +21,4 @@ public class Credentials extends Atom{
     return this.userId;
   }
 
-  public String getPassword(){
-    return this.password;
-  }
-  
 }

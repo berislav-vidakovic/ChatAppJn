@@ -93,7 +93,8 @@ public class AuthController {
             return authService.buildResponse(
               HttpStatus.BAD_REQUEST, c.getErrorMsg());
 
-        AuthUser authUser = authService.authenticate(c.getuserId(), c.getPassword());
+        AuthUser authUser = authService.authenticate(
+          c.getuserId(), body.get("password").toString() );
         if( !authUser.isOK() ) 
           return authService.buildResponse(
             HttpStatus.BAD_REQUEST, authUser.getErrorMsg());

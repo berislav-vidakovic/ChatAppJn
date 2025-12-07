@@ -28,9 +28,8 @@ public class MiddlewareCommon {
 
     if (!body.containsKey("password")) 
       return new Credentials("Missing [password] field");
-    String password = body.get("password").toString(); 
     
-    return new Credentials(userId, password);
+    return new Credentials(userId, true);
   }
 
   
