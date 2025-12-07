@@ -32,4 +32,15 @@ public class MiddlewareCommon {
     
     return new Credentials(userId, password);
   }
+
+  
+  public String parseRefreshToken(Map<String, String> body){
+    if (!body.containsKey("refreshToken")) 
+      return null;   
+    String refreshToken = body.get("refreshToken").toString();
+    
+    return refreshToken;
+  }
+
+  
 }

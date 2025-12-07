@@ -89,7 +89,7 @@ public class AuthController {
           return clientIdChecker.buildResponse(
             HttpStatus.BAD_REQUEST, "Missing or invalid clientId");
 
-        String refreshToken = body.get("refreshToken");
+        String refreshToken = authService.parseRefreshToken(body);
         AuthUser authUser = authService.authenticate(refreshToken);
         if( !authUser.isOK() ) 
           return authService.buildResponse(
