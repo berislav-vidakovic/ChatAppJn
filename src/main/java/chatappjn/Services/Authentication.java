@@ -8,10 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import chatappjn.Repositories.UserRepository;
-import chatappjn.Repositories.MessageRepository;
 import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.Repositories.RoleRepository;
-import chatappjn.Repositories.ChatRepository;
 import chatappjn.Common.AuthUser;
 import chatappjn.Config.JwtBuilder;
 import chatappjn.Models.RefreshToken;
@@ -26,17 +24,11 @@ public class Authentication extends MiddlewareCommon {
     @Autowired
     private UserRepository userRepository;
 
-     @Autowired
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired  // Add for RBAC
     private RoleRepository roleRepository;
-
-    @Autowired
-    private MessageRepository messageRepository;
-
-    @Autowired
-    private ChatRepository chatRepository;
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;

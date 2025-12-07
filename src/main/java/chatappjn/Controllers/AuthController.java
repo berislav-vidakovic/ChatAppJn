@@ -1,14 +1,8 @@
 package chatappjn.Controllers;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import java.util.Optional;
-
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.ldap.embedded.EmbeddedLdapProperties.Credential;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,25 +10,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import chatappjn.Common.AuthUser;
 import chatappjn.Common.Credentials;
 import chatappjn.Common.ModelDTO;
-import chatappjn.Models.Chat;
-import chatappjn.Models.Message;
-import chatappjn.Models.User;
-import chatappjn.Repositories.RefreshTokenRepository;
-import chatappjn.Repositories.UserRepository;
-import chatappjn.Repositories.ChatRepository;
-import chatappjn.Repositories.MessageRepository;
 import chatappjn.Services.Authentication;
 import chatappjn.Services.ClientIdChecker;
 import chatappjn.Services.ModelService;
-import chatappjn.Services.UserMonitor;
 import chatappjn.Services.WebSocketService;
 
 // POST /api/auth/refresh
@@ -43,25 +24,6 @@ import chatappjn.Services.WebSocketService;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserMonitor userMonitor;
-
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private ChatRepository  chatRepository;
-
-    @Autowired
-    private MessageRepository messageRepository;
-
     @Autowired
     private WebSocketService webSocketService;
 
@@ -69,14 +31,10 @@ public class AuthController {
     private ModelService modelService;
 
     @Autowired
-    private ObjectMapper mapper;
-
-    @Autowired
     private Authentication authService;
 
     @Autowired
     private ClientIdChecker clientIdChecker;
-
 
     public AuthController() {
     }
@@ -95,7 +53,7 @@ public class AuthController {
           return authService.buildResponse(
             HttpStatus.BAD_REQUEST, authUser.getErrorMsg());
 
-        ModelDTO model = modelService.getModel(authUser, parsedClientId);
+        ModelDTO model = modelService.handleLogin(authUser, parsedClientId);
         if( !model.isOK() )
           return modelService.buildResponse(
             HttpStatus.BAD_REQUEST, model.getErrorMsg());
@@ -140,7 +98,7 @@ public class AuthController {
           return authService.buildResponse(
             HttpStatus.BAD_REQUEST, authUser.getErrorMsg());
 
-        ModelDTO model = modelService.getModel(authUser, parsedClientId);
+        ModelDTO model = modelService.handleLogin(authUser, parsedClientId);
         if( !model.isOK() )
           return modelService.buildResponse(
             HttpStatus.BAD_REQUEST, model.getErrorMsg());
@@ -176,38 +134,13 @@ public class AuthController {
         return clientIdChecker.buildResponse(
           HttpStatus.BAD_REQUEST, "Missing or invalid clientId");
 
-      // Validate userId
-      if (!body.containsKey("userId")) {
-        Map<String, Object> response = Map.of(
-          "acknowledged", false,
-          "error", "Missing 'userId' field"
-        );
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-      }
-      String userId = body.get("userId").toString();
-
-      // Find user
-      Optional<User> optionalUser = userRepository.findById(userId);
-      if (optionalUser.isEmpty()) {
-        Map<String, Object> response = Map.of(
-          "acknowledged", false,
-          "error", "UserID Not found"
-        );
-        return new ResponseEntity<>(response, HttpStatus.NO_CONTENT); // 204
-      }
-      User user = optionalUser.get();
-      user.setOnline(false);
-      userRepository.save(user);
-
-      // Clear refresh token from DB
-      System.out.println("Deleting refresh tokens for userId: " + userId);
-      refreshTokenRepository.deleteByUserId(userId);
-      System.out.println("Deleting done ");
-
-      userMonitor.removeUser(userId);       
+      ModelDTO model = modelService.handleLogout(body, parsedClientId);
+        if( !model.isOK() )
+          return modelService.buildResponse(
+            HttpStatus.BAD_REQUEST, model.getErrorMsg());
 
       Map<String, Object> response = Map.of(
-        "userId", userId,
+        "userId", model.getUserId(),
         "isOnline", false
       );
 

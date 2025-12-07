@@ -1,17 +1,12 @@
 package chatappjn.Services;
 
-import java.time.LocalDateTime;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.*;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import chatappjn.Common.AuthUser;
@@ -21,6 +16,7 @@ import chatappjn.Models.Message;
 import chatappjn.Models.User;
 import chatappjn.Repositories.UserRepository;
 import chatappjn.Repositories.MessageRepository;
+import chatappjn.Repositories.RefreshTokenRepository;
 import chatappjn.Repositories.ChatRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -35,15 +31,15 @@ public class ModelService extends MiddlewareCommon {
     private MessageRepository messageRepository;
 
     @Autowired
-    private ChatRepository chatRepository;
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
-    private ObjectMapper mapper;
+    private ChatRepository chatRepository;
 
     @Autowired
     private UserMonitor userMonitor;
 
-    public ModelDTO getModel(AuthUser authUser, UUID parsedClientId ){
+    public ModelDTO handleLogin(AuthUser authUser, UUID parsedClientId ){
       User user = authUser.getUser();
       String userId = user.getId();
       user.setOnline(true);
@@ -64,4 +60,34 @@ public class ModelService extends MiddlewareCommon {
             
       return new ModelDTO(userId, userChats, messages);
     }
+
+    public ModelDTO handleLogout(Map<String,Object> body, UUID parsedClientId){
+       // Validate userId
+      if (!body.containsKey("userId"))
+        return new ModelDTO("Missing [userId] field");    
+ 
+      Object userIdContent = body.get("userId");
+      if( userIdContent == null )
+        return new ModelDTO("Empty [userId] field");   
+
+      String userId = userIdContent.toString();
+
+      // Find user
+      Optional<User> optionalUser = userRepository.findById(userId);
+      if (optionalUser.isEmpty()) 
+        return new ModelDTO("UserId not found ");   
+
+      User user = optionalUser.get();
+      user.setOnline(false);
+      userRepository.save(user);
+
+      // Clear refresh token from DB
+      System.out.println("Deleting refresh tokens for userId: " + userId);
+      refreshTokenRepository.deleteByUserId(userId);
+      System.out.println("Deleting done ");
+
+      userMonitor.removeUser(userId);
+
+      return new ModelDTO( userId, null, null );
+    } 
 }

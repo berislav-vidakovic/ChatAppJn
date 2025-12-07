@@ -1,10 +1,7 @@
 package chatappjn.Services;
 
-import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 
@@ -21,5 +18,4 @@ public class ClientIdChecker extends MiddlewareCommon {
     System.out.println("======================= clientId OK");
     return parsedClientId;
   }
-
 }
