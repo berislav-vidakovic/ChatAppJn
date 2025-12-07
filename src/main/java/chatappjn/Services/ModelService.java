@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import chatappjn.Common.ModelDTO;
 import chatappjn.Models.User;
 import chatappjn.Repositories.UserRepository;
 import chatappjn.Repositories.MessageRepository;
@@ -32,6 +34,9 @@ public class ModelService {
     @Autowired
     private ObjectMapper mapper;
 
+    ModelDTO getModel(){
+      return new ModelDTO("new");
+    }
     
 
 }

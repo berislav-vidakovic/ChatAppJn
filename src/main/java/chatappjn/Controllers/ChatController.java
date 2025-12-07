@@ -57,7 +57,8 @@ public class ChatController {
 
       UUID parsedClientId = clientIdChecker.parseClientId(clientId);
       if( parsedClientId == null )
-        return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
+        return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST,
+          "Mimssing or invalind client ID");
 
       // Request:  { creatorId,  memberIds: [userId1,userId2] }
       String creatorId = (String)body.get("creatorId");

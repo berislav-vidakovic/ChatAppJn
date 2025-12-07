@@ -82,14 +82,14 @@ public class AuthController {
       try {        
         UUID parsedClientId = clientIdChecker.parseClientId(clientId);
         if( parsedClientId == null )
-          return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
+          return clientIdChecker.buildResponse(
+            HttpStatus.BAD_REQUEST, "Missing or invalid clientId");
 
         String refreshToken = body.get("refreshToken");
         AuthUser authUser = authService.authenticate(refreshToken);
         if( !authUser.isOK() ) 
-          return new ResponseEntity<>(
-            Map.of("error", authUser.getErrorMsg()), 
-            HttpStatus.BAD_REQUEST); // 400  
+          return authService.buildResponse(
+            HttpStatus.BAD_REQUEST, authUser.getErrorMsg());
 
         // TO DO: ModelService accepts AuthUser
         
@@ -138,7 +138,8 @@ public class AuthController {
       try {
         UUID parsedClientId = clientIdChecker.parseClientId(clientId);
         if( parsedClientId == null )
-          return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
+          return clientIdChecker.buildResponse(
+            HttpStatus.BAD_REQUEST, "Missing or invalid clientId");
 
         // Validate userId
         if (!body.containsKey("userId")) {
@@ -162,9 +163,9 @@ public class AuthController {
         System.out.println("Password received for login: " + password);
 
         AuthUser authUser = authService.authenticate(userId, password);
-        if( !authUser.isOK() ) return new ResponseEntity<>(
-          Map.of("error", authUser.getErrorMsg()), 
-          HttpStatus.BAD_REQUEST); // 400
+        if( !authUser.isOK() ) 
+          return authService.buildResponse(
+            HttpStatus.BAD_REQUEST, authUser.getErrorMsg());
 
         User user = authUser.getUser();
 
@@ -212,7 +213,8 @@ public class AuthController {
     try {
       UUID parsedClientId = clientIdChecker.parseClientId(clientId);
       if( parsedClientId == null )
-        return clientIdChecker.buildResponse(HttpStatus.BAD_REQUEST);
+        return clientIdChecker.buildResponse(
+          HttpStatus.BAD_REQUEST, "Missing or invalid clientId");
 
       // Validate userId
       if (!body.containsKey("userId")) {

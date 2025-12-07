@@ -10,10 +10,11 @@ public class RequestChecker {
 
   }
 
-  public ResponseEntity<?> buildResponse (HttpStatusCode statusCode){
+  public ResponseEntity<?> buildResponse (
+      HttpStatusCode statusCode, String message){
     Map<String, Object> response = Map.of(
       "acknowledged", false,
-      "error", "Missing or invalid ID"
+      "error", message
     );
     return new ResponseEntity<>(response, statusCode); 
   }
