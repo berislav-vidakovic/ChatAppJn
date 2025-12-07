@@ -10,6 +10,22 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
   }
 
+  #  WebSocket support
+  location /websocket {
+    proxy_pass http://127.0.0.1:8081;
+
+    # REQUIRED for WebSockets
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+
+    # Pass client info headers
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
   listen 443 ssl; # managed by Certbot
     ssl_certificate /etc/letsencrypt/live/chatjn.barryonweb.com/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/chatjn.barryonweb.com/privkey.pem; # managed by Certbot
