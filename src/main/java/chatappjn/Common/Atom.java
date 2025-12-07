@@ -1,8 +1,8 @@
 package chatappjn.Common;
 
 public class Atom {
-  private final boolean isOK;
-  private final String errorMessage;
+  protected boolean isOK;
+  protected String errorMessage;
 
   public Atom(String err) {
     this.isOK = false;

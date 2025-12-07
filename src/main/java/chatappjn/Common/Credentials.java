@@ -5,6 +5,7 @@ public class Credentials extends Atom{
   private String password;
 
   public Credentials( String userId, String password ){
+    super();
     this.userId = userId;
     this.password = password;    
   }
