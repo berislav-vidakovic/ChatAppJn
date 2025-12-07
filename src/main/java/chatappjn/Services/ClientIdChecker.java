@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 
 @Service
-public class ClientIdChecker extends RequestChecker {
+public class ClientIdChecker extends MiddlewareCommon {
   public UUID parseClientId (String clientId){
     UUID parsedClientId = null;
     try {

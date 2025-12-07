@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 // Spring-managed singleton 
 @Service
-public class Authentication extends RequestChecker {
+public class Authentication extends MiddlewareCommon {
     @Autowired
     private UserRepository userRepository;
 

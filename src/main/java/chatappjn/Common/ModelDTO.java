@@ -1,28 +1,32 @@
 package chatappjn.Common;
 
-import chatappjn.Models.User;
+import java.util.List;
+
+import chatappjn.Models.Chat;
+import chatappjn.Models.Message;
 
 public class ModelDTO {
-  private final String accessToken;
-  private final String refreshToken;
-  private final User user;
-  private final boolean authSuccessful;
+  private final boolean isOK;
   private final String errorMessage;
+  private final String userId; 
+  private final List<Chat> userChats;
+  private final List<Message> messages;
 
-  public ModelDTO(String accessToken, String refreshToken, 
-      User user) {
-    this.accessToken = accessToken;
-    this.refreshToken = refreshToken;
-    this.user = user;
-    this.authSuccessful = true;
+  public ModelDTO(String userId, 
+    List<Chat> userChats, List<Message> messages
+  ) {
+    this.userId = userId;
+    this.userChats = userChats;
+    this.messages = messages;
+    this.isOK = true;
     this.errorMessage = "";
   }
 
   public ModelDTO(String err) {
-    this.accessToken = "";
-    this.refreshToken = "";
-    this.user = null;
-    this.authSuccessful = false;
+    this.userId = null;
+    this.userChats = null;
+    this.messages = null;
+    this.isOK = false;
     this.errorMessage = err;
   }
 
@@ -31,18 +35,18 @@ public class ModelDTO {
   }
 
   public boolean isOK(){
-    return this.authSuccessful;
+    return this.isOK;
   }
 
-  public String getAccessToken() {
-    return accessToken;
+  public String  getUserId(){
+    return this.userId;
   }
 
-  public String getRefreshToken() {
-    return refreshToken;
-  }
-
-  public User getUser() {
-    return user;
+  public List<Chat> getUserChats(){
+    return this.userChats;
+  } 
+  
+  public List<Message> getMessages(){
+    return this.messages;
   }
 }

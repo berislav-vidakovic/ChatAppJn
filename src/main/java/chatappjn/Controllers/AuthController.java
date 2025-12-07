@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import chatappjn.Common.AuthUser;
+import chatappjn.Common.ModelDTO;
 import chatappjn.Models.Chat;
 import chatappjn.Models.Message;
 import chatappjn.Models.User;
@@ -74,6 +75,7 @@ public class AuthController {
     @Autowired
     private ClientIdChecker clientIdChecker;
 
+
     public AuthController() {
     }
 
@@ -91,33 +93,18 @@ public class AuthController {
           return authService.buildResponse(
             HttpStatus.BAD_REQUEST, authUser.getErrorMsg());
 
-        // TO DO: ModelService accepts AuthUser
-        
-        User user = authUser.getUser();
-        String userId = user.getId();
-        user.setOnline(true);
-        userRepository.save(user);
-
-        userMonitor.updateUserActivity(user.getId(), parsedClientId);
-
-        // Fetch chats where user participates
-        ObjectId userObjectId = new ObjectId(userId); 
-        List<Chat> userChats = chatRepository.findByUserIdsContaining(userObjectId);
-
-        // Fetch all messages from those chats
-        List<ObjectId> chatIds = userChats.stream()
-              .map(chat -> new ObjectId(chat.getId()))
-              .toList();
-
-        List<Message> messages = messageRepository.findByChatIdInOrderByDatetimeAsc(chatIds);
+        ModelDTO model = modelService.getModel(authUser, parsedClientId);
+        if( !model.isOK() )
+          return modelService.buildResponse(
+            HttpStatus.BAD_REQUEST, model.getErrorMsg());
 
         Map<String, Object> response = Map.of(
-            "userId", userId,
+            "userId", model.getUserId(),
             "isOnline", true,
             "accessToken", authUser.getAccessToken(),           
             "refreshToken", authUser.getRefreshToken(),
-            "chats", userChats,
-            "messages", messages
+            "chats", model.getUserChats(),
+            "messages", model.getMessages()
         );
 
         webSocketService.broadcastMessage("userSessionUpdate",
