@@ -140,6 +140,11 @@ public class AuthController {
           return authService.buildResponse(
             HttpStatus.BAD_REQUEST, authUser.getErrorMsg());
 
+        ModelDTO model = modelService.getModel(authUser, parsedClientId);
+        if( !model.isOK() )
+          return modelService.buildResponse(
+            HttpStatus.BAD_REQUEST, model.getErrorMsg());
+        /*
         User user = authUser.getUser();
 
         // Set user online
@@ -157,14 +162,14 @@ public class AuthController {
                 .toList();
 
         List<Message> messages = messageRepository.findByChatIdInOrderByDatetimeAsc(chatIds);
-
+            */
         Map<String, Object> response = Map.of(
-            "userId", c.getuserId(),
+            "userId", model.getUserId(),
             "isOnline", true,
             "accessToken", authUser.getAccessToken(),           
             "refreshToken", authUser.getRefreshToken(),
-            "chats", userChats,
-            "messages", messages
+            "chats", model.getUserChats(),
+            "messages", model.getMessages()
         );
 
         webSocketService.broadcastMessage("userSessionUpdate",

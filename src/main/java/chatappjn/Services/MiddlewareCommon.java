@@ -37,10 +37,11 @@ public class MiddlewareCommon {
   public String parseRefreshToken(Map<String, String> body){
     if (!body.containsKey("refreshToken")) 
       return null;   
-    String refreshToken = body.get("refreshToken").toString();
-    
-    return refreshToken;
-  }
 
-  
+    String refreshToken = body.get("refreshToken");
+    if( refreshToken == null )
+      return null;
+
+    return refreshToken.toString();
+  }
 }
