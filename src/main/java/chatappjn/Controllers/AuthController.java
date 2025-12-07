@@ -144,25 +144,7 @@ public class AuthController {
         if( !model.isOK() )
           return modelService.buildResponse(
             HttpStatus.BAD_REQUEST, model.getErrorMsg());
-        /*
-        User user = authUser.getUser();
 
-        // Set user online
-        user.setOnline(true);
-        userRepository.save(user);
-        userMonitor.updateUserActivity(user.getId(), parsedClientId);
-
-        // Fetch chats where user participates
-        ObjectId userObjectId = new ObjectId(c.getuserId()); 
-        List<Chat> userChats = chatRepository.findByUserIdsContaining(userObjectId);
-
-        // Fetch all messages from those chats
-        List<ObjectId> chatIds = userChats.stream()
-                .map(chat -> new ObjectId(chat.getId()))
-                .toList();
-
-        List<Message> messages = messageRepository.findByChatIdInOrderByDatetimeAsc(chatIds);
-            */
         Map<String, Object> response = Map.of(
             "userId", model.getUserId(),
             "isOnline", true,
