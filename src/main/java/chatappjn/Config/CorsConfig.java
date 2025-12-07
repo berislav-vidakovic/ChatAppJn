@@ -16,7 +16,7 @@ public class CorsConfig {
         registry.addMapping("/**")
                 .allowedOrigins(
                   "http://localhost:5177", // Dev
-                  "https://chatjnclient.barryonweb.com/" //Prod
+                  "https://chatjnclient.barryonweb.com" //Prod
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
