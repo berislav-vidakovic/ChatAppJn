@@ -22,27 +22,14 @@ public class MiddlewareCommon {
   }
 
   public Credentials parseCredentials(Map<String, Object> body){
-    // Validate userId
-    /*
-        if (!body.containsKey("userId")) {
-          Map<String, Object> response = Map.of(
-              "acknowledged", false,
-              "error", "Missing 'userId' field"
-            );
-          return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-        }
-        String userId = body.get("userId").toString();
+    if (!body.containsKey("userId")) 
+      return new Credentials("Missing [userId] field");    
+    String userId = body.get("userId").toString();
 
-        // Extract password field
-        if (!body.containsKey("password")) {
-          Map<String, Object> response = Map.of(
-              "acknowledged", false,
-              "error", "Missing 'password' field"
-            );
-          return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-        }
-        String password = body.get("password").toString(); 
-    return new Credentials(userId, password);*/
-    return new Credentials("","");
+    if (!body.containsKey("password")) 
+      return new Credentials("Missing [password] field");
+    String password = body.get("password").toString(); 
+    
+    return new Credentials(userId, password);
   }
 }

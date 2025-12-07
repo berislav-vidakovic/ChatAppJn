@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ldap.embedded.EmbeddedLdapProperties.Credential;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import chatappjn.Common.AuthUser;
+import chatappjn.Common.Credentials;
 import chatappjn.Common.ModelDTO;
 import chatappjn.Models.Chat;
 import chatappjn.Models.Message;
@@ -128,28 +130,12 @@ public class AuthController {
           return clientIdChecker.buildResponse(
             HttpStatus.BAD_REQUEST, "Missing or invalid clientId");
 
-        // Validate userId
-        if (!body.containsKey("userId")) {
-          Map<String, Object> response = Map.of(
-              "acknowledged", false,
-              "error", "Missing 'userId' field"
-            );
-          return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-        }
-        String userId = body.get("userId").toString();
+        Credentials c = authService.parseCredentials(body);
+        if( !c.isOK() )
+            return authService.buildResponse(
+              HttpStatus.BAD_REQUEST, c.getErrorMsg());
 
-        // Extract password field
-        if (!body.containsKey("password")) {
-          Map<String, Object> response = Map.of(
-              "acknowledged", false,
-              "error", "Missing 'password' field"
-            );
-          return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 400
-        }
-        String password = body.get("password").toString();
-        System.out.println("Password received for login: " + password);
-
-        AuthUser authUser = authService.authenticate(userId, password);
+        AuthUser authUser = authService.authenticate(c.getuserId(), c.getPassword());
         if( !authUser.isOK() ) 
           return authService.buildResponse(
             HttpStatus.BAD_REQUEST, authUser.getErrorMsg());
@@ -162,7 +148,7 @@ public class AuthController {
         userMonitor.updateUserActivity(user.getId(), parsedClientId);
 
         // Fetch chats where user participates
-        ObjectId userObjectId = new ObjectId(userId); 
+        ObjectId userObjectId = new ObjectId(c.getuserId()); 
         List<Chat> userChats = chatRepository.findByUserIdsContaining(userObjectId);
 
         // Fetch all messages from those chats
@@ -173,7 +159,7 @@ public class AuthController {
         List<Message> messages = messageRepository.findByChatIdInOrderByDatetimeAsc(chatIds);
 
         Map<String, Object> response = Map.of(
-            "userId", userId,
+            "userId", c.getuserId(),
             "isOnline", true,
             "accessToken", authUser.getAccessToken(),           
             "refreshToken", authUser.getRefreshToken(),

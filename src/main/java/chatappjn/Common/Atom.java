@@ -10,7 +10,7 @@ public class Atom {
   }
 
   public Atom() {
-    this.isOK = false;
+    this.isOK = true;
     this.errorMessage = null;
   }
 
