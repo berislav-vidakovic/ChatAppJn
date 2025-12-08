@@ -46,7 +46,7 @@ public abstract class IdleMonitor<TKey> {
           cleanupIntervalSeconds,
           TimeUnit.SECONDS
         );
-        System.out.println(" *** Timer started ("+msg+")*********************************** ");
+        System.out.println(" *** Timer started ("+msg+")***" + " timeout=" + idleTimeoutMinutes + " interval=" + cleanupIntervalSeconds );
     }
   }
 

@@ -660,4 +660,70 @@ update Nginx config file </a>
     }
   ```
 
+## 14. Adding support for connect frontend in Production
 
+- Enable frontend in CORS policy - update WebMvcConfigurer
+
+  ```java
+  @Configuration
+  public class CorsConfig {
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+      return new WebMvcConfigurer() {
+        @Override
+        public void addCorsMappings(CorsRegistry registry) {
+          registry.addMapping("/**")
+                  .allowedOrigins(
+                    "http://localhost:5177", // Dev
+                    "https://chatjnclient.barryonweb.com" //Prod
+                  )
+                  .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                  .allowedHeaders("*")
+                  .allowCredentials(true);
+        }
+      };
+    }
+  } 
+  ```
+
+- Add Websocket support in Nginx config
+
+  ```nginx
+  location /websocket {
+    proxy_pass http://127.0.0.1:8081;
+
+    # REQUIRED for WebSockets
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+
+    # Pass client info headers
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;  
+  }
+  ```
+
+- Allow frontend access in Websocket Config
+
+  ```java
+  @Configuration
+  @EnableWebSocket
+  public class WebSocketConfig implements WebSocketConfigurer {
+
+    private final WebSocketHandler webSocketHandler;
+
+    public WebSocketConfig(WebSocketHandler webSocketHandler) {
+        this.webSocketHandler = webSocketHandler;
+    }
+
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(webSocketHandler, "/websocket")
+                .setAllowedOrigins("http://localhost:5177", // Dev
+                                  "https://chatjnclient.barryonweb.com" // Prod
+                                  ); 
+    }
+  }
+  ```

@@ -173,6 +173,30 @@
   - Test connection
 
     - Create .github/workflows/test-ssh.yml
+
+      ```yaml
+      name: Test SSH Connection
+
+      on:
+        workflow_dispatch:  # Allows trigger manually in GitHub
+
+      jobs:
+        test-ssh:
+          runs-on: ubuntu-latest
+
+          steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Start SSH agent and load key
+              uses: webfactory/ssh-agent@v0.9.0
+              with:
+                ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+            - name: Test SSH connection
+              run: ssh -o StrictHostKeyChecking=no barry75@barryonweb.com "echo Connected successfully from GitHub!"
+      ```
+
     - GitHub Actions - Run workflow
 
 
