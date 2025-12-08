@@ -71,15 +71,14 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
       for (Map.Entry<WebSocketSession, Client> entry : sessionMap.entrySet()) {
         WebSocketSession session = entry.getKey();
         Client client = entry.getValue();
-        System.out.println("===== WS in checkIdleSessions clientId=" + client.getClientId() );
+        //System.out.println("===== WS in checkIdleSessions clientId=" + client.getClientId() );
         if (client == null || client.getTimeStamp() == null) 
           continue;
         UUID id = client.getClientId();
         if (Duration.between(client.getTimeStamp(), now).compareTo(IDLE_TIMEOUT) > 0) {
           try {
-            System.out.println("===== WS CLOSING due to inactivity: clientId=" + client.getClientId() );            
             String userId = userMonitor.getUserIdByClientId(id);
-            System.out.println("===== UserId= " + userId );                   
+            System.out.println("===== WS idle mark for CLOSING : clientId=" + client.getClientId() + " userId=" + userId );
             sessionsToClose.put(session, userId);            
           } 
           catch (Exception e) {
@@ -108,7 +107,7 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
           try {
             session.close(CloseStatus.GOING_AWAY);
             sessionMap.remove(session);
-            System.out.println("Closed session: " + session.getId());
+            System.out.println("===== WS Closed session: " + session.getId());
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -116,6 +115,6 @@ public class SessionMonitor extends IdleMonitor<WebSocketSession> {
       }
       if( sessionMap.isEmpty() )
         stopTimer("WebSocketSession");
-      System.out.println(" *************** WS idle cleanup WS(s): " + sessionMap.size() );
+      System.out.println(" *************** WS AFTER idle cleanup WS(s): " + sessionMap.size() );
     }    
 }

@@ -152,7 +152,7 @@ public class UserMonitor extends IdleMonitor<String> {
           }
           return idle;
         });
-        System.out.println(" *** cleanupIdleUsers-END, Count = " + userActivityMap.size());
+        System.out.println(" *************** UserMonitor AFTER idle cleanup User(s): = " + userActivityMap.size());
         if( userActivityMap.isEmpty() ) // Stop timer if no active users remain
           stopTimer("UserMonitor");
       } 

@@ -15,7 +15,7 @@ public class ClientIdChecker extends MiddlewareCommon {
     catch (IllegalArgumentException e) {
       return null;
     }
-    System.out.println("======================= clientId OK");
+    //System.out.println("======================= clientId OK");
     return parsedClientId;
   }
 }
