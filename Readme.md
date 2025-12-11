@@ -411,6 +411,39 @@ update Nginx config file </a>
 
 ## 10. Login with password and logout
 
+
+- SecurityConfig → defines which endpoints are public/protected
+- JwtValidator → validates the token and sets Spring Security authentication
+- PublicEndpoints - static class as SSoT for public endpoints, used by both SecurityConfig and JwtValidator
+- Set authentication for protected edndpoints in JwtValidator:
+  ```java
+  // Set Spring Security Authentication - tells Spring Security that the request is authenticated
+  UsernamePasswordAuthenticationToken auth =
+          new UsernamePasswordAuthenticationToken(username, null, List.of());
+  SecurityContextHolder.getContext().setAuthentication(auth);
+  ```
+- register JwtValidator to be executed first in chain, in SecurityConfig:
+  - Add member variable and constructor
+    ```java
+    public class SecurityConfig {
+      private final JwtValidator jwtValidator;
+      public SecurityConfig(JwtValidator jwtValidator) {
+          this.jwtValidator = jwtValidator;
+      }
+    ```
+  - Call addFilterBefore() directly on http, outside the authorizeHttpRequests lambda:
+    ```java
+    .addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class);
+    ```
+- Workflow
+  1. Request comes in.
+  2. JwtValidator runs before Spring Security (addFilterBefore)
+      - If endpoint is public → skips JWT validation
+      - If endpoint is protected → validates JWT, sets authentication
+  3. Spring Security checks .anyRequest().authenticated()
+      - If authentication is set → passes
+      - If authentication is missing/invalid → 403 Forbidden
+
 - Added Autowired passwordEncoder member to AuthController
 - Added endpoint /login to AuthController
   - White list in SecurityConfig::filterChain 
@@ -687,6 +720,7 @@ update Nginx config file </a>
   ```
 
 - Add Websocket support in Nginx config
+  - For Nginx, the default WebSocket timeout is 60 seconds
 
   ```nginx
   location /websocket {
@@ -702,6 +736,11 @@ update Nginx config file </a>
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;  
+
+    # Prevent default 60-second idle disconnect
+    proxy_read_timeout 3600;
+    proxy_send_timeout 3600;
+    proxy_connect_timeout 3600;
   }
   ```
 

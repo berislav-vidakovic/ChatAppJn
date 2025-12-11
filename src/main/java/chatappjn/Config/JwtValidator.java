@@ -6,10 +6,15 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import chatappjn.Common.PublicEndpoints;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,19 +30,13 @@ public class JwtValidator extends OncePerRequestFilter {
 
     String headerSectionAuth = request.getHeader("Authorization");
 
-    // White list - Allow endpoints without token
     String path = request.getRequestURI();
-    if( path.startsWith("/api/ping") ||
-        path.startsWith("/api/pingdb") ||
-        path.startsWith("/api/users/all") ||
-        path.startsWith("/api/users/register") ||
-        path.startsWith("/websocket") ||
-        path.startsWith("/api/auth/refresh") ||
-        path.startsWith("/api/auth/login") 
-      ){
-          filterChain.doFilter(request, response);
-          return;
+    // White list - Skip JWT validation if path starts with any public endpoint
+    if (PublicEndpoints.ENDPOINTS.stream().anyMatch(path::startsWith)) {
+        filterChain.doFilter(request, response);
+        return;
     }
+
     if (headerSectionAuth != null && headerSectionAuth.startsWith("Bearer ")) {
       String accessJWT = headerSectionAuth.substring("Bearer ".length()); //remove prefix
       try { // Validate the JWT
@@ -57,6 +56,11 @@ public class JwtValidator extends OncePerRequestFilter {
         request.setAttribute("userId", userId);
         request.setAttribute("roles", roles);
         request.setAttribute("claims", userClaims);
+
+        // Set Spring Security Authentication - tells Spring Security that the request is authenticated
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(username, null, List.of());
+        SecurityContextHolder.getContext().setAuthentication(auth);
       } 
       catch (Exception e) {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
