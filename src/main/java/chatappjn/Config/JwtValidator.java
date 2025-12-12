@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import chatappjn.Common.PublicEndpoints;
+import chatappjn.Common.Endpoints;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,6 +23,9 @@ import java.util.Map;
 
 @Component
 public class JwtValidator extends OncePerRequestFilter {
+  @Autowired
+  private Endpoints endpoints;
+
   @Override
   protected void doFilterInternal(HttpServletRequest request,
                                   HttpServletResponse response,
@@ -32,7 +36,7 @@ public class JwtValidator extends OncePerRequestFilter {
 
     String path = request.getRequestURI();
     // White list - Skip JWT validation if path starts with any public endpoint
-    if (PublicEndpoints.ENDPOINTS.stream().anyMatch(path::startsWith)) {
+    if (endpoints.getPublicEndpoints().stream().anyMatch(path::startsWith)) {
         filterChain.doFilter(request, response);
         return;
     }

@@ -31,9 +31,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-// GET /api/users/all
-// POST /api/users/register
-// POST /api/users/roles
+// GET /all
+// POST /register
+// POST /roles
 @RestController
 @RequestMapping("/api/users")
 public class UsersController {

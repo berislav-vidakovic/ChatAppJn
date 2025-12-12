@@ -1,5 +1,6 @@
 package chatappjn.Config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -8,12 +9,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import chatappjn.Common.PublicEndpoints;
+import chatappjn.Common.Endpoints;
 
 @Configuration
 public class SecurityConfig {
 
   private final JwtValidator jwtValidator;
+
+  @Autowired
+  Endpoints endpoints;
 
   public SecurityConfig(JwtValidator jwtValidator) {
       this.jwtValidator = jwtValidator;
@@ -30,10 +34,10 @@ public class SecurityConfig {
       .csrf(csrf -> csrf.disable())
       .cors(cors -> {}) // enables CORS support
       .authorizeHttpRequests( auth -> {
-            // Loop over public endpoints
-            PublicEndpoints.ENDPOINTS.forEach(
-              ep -> auth.requestMatchers(ep).permitAll());
-            auth.anyRequest().authenticated();
+          // Loop over public endpoints
+          endpoints.getPublicEndpoints().forEach( ep -> 
+            auth.requestMatchers(ep).permitAll());
+          auth.anyRequest().authenticated();
         })
          // Register JwtValidator
       .addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class);

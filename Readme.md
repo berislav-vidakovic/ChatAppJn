@@ -744,7 +744,7 @@ update Nginx config file </a>
   }
   ```
 
-- Allow frontend access in Websocket Config
+- Allow frontend access to Registry in Websocket Config
 
   ```java
   @Configuration
